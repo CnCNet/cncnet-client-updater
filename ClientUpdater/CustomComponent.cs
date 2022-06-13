@@ -183,8 +183,7 @@ namespace ClientUpdater
 
                 WebClient client = new WebClient
                 {
-                    CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore),
-                    Encoding = Encoding.GetEncoding("Windows-1252")
+                    CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore)
                 };
 
                 client.Headers.Add(HttpRequestHeader.UserAgent, Updater.GetUserAgentString());
@@ -212,8 +211,7 @@ namespace ClientUpdater
 
                     WebClient clientFile = new WebClient
                     {
-                        CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore),
-                        Encoding = Encoding.GetEncoding("Windows-1252")
+                        CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore)
                     };
 
                     clientFile.Headers.Add(HttpRequestHeader.UserAgent, Updater.GetUserAgentString());

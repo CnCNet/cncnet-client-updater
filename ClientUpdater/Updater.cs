@@ -599,8 +599,7 @@ namespace ClientUpdater
 
                     WebClient client = new WebClient
                     {
-                        CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore),
-                        Encoding = Encoding.GetEncoding("Windows-1252")
+                        CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore)
                     };
 
                     client.Headers.Add(HttpRequestHeader.UserAgent, GetUserAgentString());
@@ -762,8 +761,7 @@ namespace ClientUpdater
             {
                 WebClient client = new WebClient
                 {
-                    CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore),
-                    Encoding = Encoding.GetEncoding("Windows-1252")
+                    CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore)
                 };
                 client.Headers.Add(HttpRequestHeader.UserAgent, GetUserAgentString());
                 client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(WebClient_DownloadProgressChanged);
@@ -791,8 +789,7 @@ namespace ClientUpdater
             {
                 WebClient client = new WebClient
                 {
-                    CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore),
-                    Encoding = Encoding.GetEncoding("Windows-1252")
+                    CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore)
                 };
                 client.Headers.Add(HttpRequestHeader.UserAgent, GetUserAgentString());
                 client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(WebClient_DownloadProgressChanged);
@@ -1109,8 +1106,7 @@ namespace ClientUpdater
                 {
                     WebClient client = new WebClient
                     {
-                        CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore),
-                        Encoding = Encoding.GetEncoding("Windows-1252")
+                        CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore)
                     };
                     client.Headers.Add(HttpRequestHeader.UserAgent, GetUserAgentString());
                     client.DownloadProgressChanged += WebClient_DownloadProgressChanged;
