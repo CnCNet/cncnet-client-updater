@@ -1226,7 +1226,7 @@ namespace ClientUpdater
                                 {
                                     UseShellExecute = false,
                                     FileName = secondStageUpdaterResource.FullName,
-                                    Arguments = SafePath.CombineDirectoryPath(CallingExecutableFileName, GamePath)
+                                    Arguments =  CallingExecutableFileName + " \"" + GamePath + "\""
                                 }
                             }.Start();
 
