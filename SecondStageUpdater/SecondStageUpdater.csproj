@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net48;net6.0-windows10.0.22000.0</TargetFrameworks>
+    <SupportedOSPlatformVersion>10.0.22000.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion>7.0</TargetPlatformMinVersion>
     <UseWindowsForms>true</UseWindowsForms>
     <Title></Title>
