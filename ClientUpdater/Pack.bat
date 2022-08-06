@@ -1,1 +1,0 @@
-dotnet pack .\ClientUpdater.csproj -c Release

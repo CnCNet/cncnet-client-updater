@@ -1,15 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net48;net6.0</TargetFrameworks>
-    <Title></Title>
+    <Title>CnCNet.ClientUpdater</Title>
     <Description>CnCNet Client Updater Library</Description>
     <Company>CnCNet</Company>
     <Product></Product>
     <Copyright>Copyright © CnCNet 2022</Copyright>
     <Trademark></Trademark>
-    <Version>1.1.0.0</Version>
-    <FileVersion>1.1.0.0</FileVersion>
-    <InformationalVersion>1.1.0.0</InformationalVersion>
     <AssemblyName>ClientUpdater</AssemblyName>
     <RootNamespace>ClientUpdater</RootNamespace>
     <ComVisible>false</ComVisible>
@@ -25,6 +22,13 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageId>CnCNet.ClientUpdater</PackageId>
+    <PackageTags></PackageTags>
+    <PackageProjectUrl>https://github.com/CnCNet/cncnet-client-updater</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <EnablePackageValidation>true</EnablePackageValidation>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" />
@@ -35,5 +39,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 </Project>
