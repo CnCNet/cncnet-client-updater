@@ -360,7 +360,7 @@ namespace ClientUpdater
         /// <param name="archiveSize">Set to archive file size.</param>
         internal static void GetArchiveInfo(IniFile versionFile, string filename, out string archiveID, out int archiveSize)
         {
-            string[] values = versionFile.GetStringValue("ArchivedFiles", SafePath.CombineFilePath(filename), "").Split(',');
+            string[] values = versionFile.GetStringValue("ArchivedFiles", filename, "").Split(',');
             bool archiveAvailable = values != null && values.Length >= 2;
             archiveID = archiveAvailable ? values[0] : "";
             archiveSize = archiveAvailable ? Conversions.IntFromString(values[1], 0) : 0;
