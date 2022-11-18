@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net48;net6.0;net6.0-windows</TargetFrameworks>
-    <UseWindowsForms Condition="'$(TargetFramework)' != 'net6.0'">true</UseWindowsForms>
-    <UseWindowsForms Condition="'$(TargetFramework)' == 'net6.0'">false</UseWindowsForms>
-    <ApplicationHighDpiMode Condition="$(TargetFramework.Contains('-windows'))">PerMonitorV2</ApplicationHighDpiMode>
+    <TargetFrameworks>net7.0;net7.0-windows</TargetFrameworks>
+    <UseWindowsForms Condition="'$(TargetFramework)' != 'net7.0'">true</UseWindowsForms>
+    <UseWindowsForms Condition="'$(TargetFramework)' == 'net7.0'">false</UseWindowsForms>
+    <ApplicationHighDpiMode Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">PerMonitorV2</ApplicationHighDpiMode>
     <OutputType>Exe</OutputType>
     <Title></Title>
     <Description>CnCNet Client Second-Stage Updater</Description>
@@ -24,14 +24,15 @@
     <Platforms>AnyCPU</Platforms>
     <ComVisible>false</ComVisible>
     <CLSCompliant>false</CLSCompliant>
+    <ApplicationManifest Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">app.manifest</ApplicationManifest>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
     <Compile Remove="MainForm.cs" />
     <Compile Remove="MainForm.Designer.cs" />
     <EmbeddedResource Remove="MainForm.resx" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Rampastring.Tools" Version="2.0.3" />
+    <PackageReference Include="Rampastring.Tools" Version="2.0.4" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

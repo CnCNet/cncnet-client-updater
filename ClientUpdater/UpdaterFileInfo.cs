@@ -72,4 +72,3 @@ namespace ClientUpdater
         public bool Archived => !string.IsNullOrEmpty(ArchiveIdentifier) && ArchiveSize > 0;
     }
 }
-

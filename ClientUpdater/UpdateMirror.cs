@@ -53,7 +53,5 @@ namespace ClientUpdater
         /// Update mirror location.
         /// </summary>
         public string Location { get; set; }
-
     }
 }
-

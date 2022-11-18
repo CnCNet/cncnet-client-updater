@@ -303,7 +303,9 @@ namespace ClientUpdater
                     foreach (Exception ei in (e as AggregateException).InnerExceptions)
                     {
                         if (ei is TaskCanceledException || ei is OperationCanceledException)
+                        {
                             canceled = true;
+                        }
                         else
                         {
                             if (!displayError)
@@ -316,7 +318,9 @@ namespace ClientUpdater
                         }
 
                         if (canceled)
+                        {
                             HandleAfterCancelDownload();
+                        }
                         else
                         {
                             IsBeingDownloaded = false;
@@ -400,9 +404,11 @@ namespace ClientUpdater
         #region events_and_delegates
 
         public event DownloadFinishedEventHandler DownloadFinished;
+
         public event DownloadProgressChangedEventHandler DownloadProgressChanged;
 
         public delegate void DownloadFinishedEventHandler(CustomComponent cc, bool success);
+
         public delegate void DownloadProgressChangedEventHandler(CustomComponent cc, int percentage);
 
         private void DoDownloadFinished(bool success) => DownloadFinished?.Invoke(this, success);
@@ -427,4 +433,3 @@ namespace ClientUpdater
         #endregion
     }
 }
-

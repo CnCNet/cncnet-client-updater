@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net48;net6.0</TargetFrameworks>
+    <TargetFramework>net7.0</TargetFramework>
     <Title>CnCNet.ClientUpdater</Title>
     <Description>CnCNet Client Updater Library</Description>
     <Company>CnCNet</Company>
@@ -34,7 +34,7 @@
     <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Rampastring.Tools" Version="2.0.3" />
+    <PackageReference Include="Rampastring.Tools" Version="2.0.4" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

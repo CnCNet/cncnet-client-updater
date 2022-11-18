@@ -22,7 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-#if WINDOWS || NETFRAMEWORK
+#if WINDOWS
 using System.Windows.Forms;
 #endif
 using Rampastring.Tools;
@@ -54,13 +54,9 @@ namespace SecondStageUpdater
                     FileInfo clientExecutable = SafePath.GetFile(args[0]);
                     DirectoryInfo baseDirectory = SafePath.GetDirectory(args[1].Replace("\"", null));
                     DirectoryInfo resourceDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Resources");
-#if WINDOWS || NETFRAMEWORK
+#if WINDOWS
 
-#if NETFRAMEWORK
-                    Application.EnableVisualStyles();
-#else
                     ApplicationConfiguration.Initialize();
-#endif
 
                     FileInfo imageFile = SafePath.GetFile(resourceDirectory.FullName, "launcherupdater.png");
                     MainForm mainForm = null;
@@ -101,9 +97,13 @@ namespace SecondStageUpdater
                             Write(fileInfo.FullName);
 
                             if (Path.GetFileNameWithoutExtension(fileInfo.Name).Equals(Path.GetFileNameWithoutExtension(executableFile.Name)))
+                            {
                                 Write($"Skipping {fileInfo.FullName}");
+                            }
                             else if (fileInfo.Name == "version")
+                            {
                                 Write("Skipping version");
+                            }
                             else
                             {
                                 try
@@ -139,11 +139,8 @@ namespace SecondStageUpdater
                         try
                         {
                             Write("Checking ClientDefinitions.ini for launcher executable filename (LauncherExe).");
-#if NETFRAMEWORK
-                            string[] lines = File.ReadAllLines(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini"));
-#else
+
                             string[] lines = await File.ReadAllLinesAsync(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini"));
-#endif
                             string line = lines.Single(q => q.Trim().StartsWith("LauncherExe") && q.Contains("="));
                             int commentStart = line.IndexOf(';');
 
@@ -185,7 +182,7 @@ namespace SecondStageUpdater
                         Write("Returned error was: " + ex.Message);
                         Write("");
                         Write("If you were updating a game, please try again. If the problem continues, contact the staff for support.");
-#if WINDOWS || NETFRAMEWORK
+#if WINDOWS
                         mainForm?.Hide();
                         MessageBox.Show("An error occured during the updater's operation. Returned error was: " + ex.Message + Environment.NewLine + Environment.NewLine + "If you were updating a game, please try again. If the problem continues, contact the staff for support. Press OK to exit.", "Update failed");
 #else

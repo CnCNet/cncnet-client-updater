@@ -89,6 +89,7 @@ namespace ClientUpdater
         public static VersionState VersionState
         {
             get { return _versionState; }
+
             private set
             {
                 _versionState = value;
@@ -249,7 +250,9 @@ namespace ClientUpdater
                         LocalFileInfos.Add(item);
                     }
                     else
+                    {
                         Logger.Log("Updater: Warning: Malformed file info in local version information: " + str);
+                    }
                 }
             }
 
@@ -730,7 +733,9 @@ namespace ClientUpdater
                             DoFileIdentifiersUpdatedEvent();
                         }
                         else
+                        {
                             VersionCheckHandle();
+                        }
                     }
                 }
             }
@@ -1460,20 +1465,33 @@ namespace ClientUpdater
         #region events_and_delegates
 
         public static event NoParamEventHandler FileIdentifiersUpdated;
+
         public static event LocalFileCheckProgressChangedCallback LocalFileCheckProgressChanged;
+
         public static event NoParamEventHandler OnCustomComponentsOutdated;
+
         public static event NoParamEventHandler OnLocalFileVersionsChecked;
+
         public static event NoParamEventHandler OnUpdateCompleted;
+
         public static event SetExceptionCallback OnUpdateFailed;
+
         public static event NoParamEventHandler OnVersionStateChanged;
+
         public static event FileDownloadCompletedEventHandler OnFileDownloadCompleted;
+
         public static event EventHandler Restart;
+
         public static event UpdateProgressChangedCallback UpdateProgressChanged;
 
         public delegate void LocalFileCheckProgressChangedCallback(int checkedFileCount, int totalFileCount);
+
         public delegate void NoParamEventHandler();
+
         public delegate void SetExceptionCallback(Exception ex);
+
         public delegate void UpdateProgressChangedCallback(string currFileName, int currFilePercentage, int totalPercentage);
+
         public delegate void FileDownloadCompletedEventHandler(string archiveName);
 
         private static void WebClient_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e) => UpdateDownloadProgress(e.ProgressPercentage);
