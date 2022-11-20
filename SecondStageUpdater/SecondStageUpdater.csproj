@@ -1,10 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net7.0-windows</TargetFrameworks>
-    <UseWindowsForms Condition="'$(TargetFramework)' != 'net7.0'">true</UseWindowsForms>
-    <UseWindowsForms Condition="'$(TargetFramework)' == 'net7.0'">false</UseWindowsForms>
-    <ApplicationHighDpiMode Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">PerMonitorV2</ApplicationHighDpiMode>
-    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
     <Title></Title>
     <Description>CnCNet Client Second-Stage Updater</Description>
     <Company>CnCNet</Company>
@@ -24,13 +20,7 @@
     <Platforms>AnyCPU</Platforms>
     <ComVisible>false</ComVisible>
     <CLSCompliant>false</CLSCompliant>
-    <ApplicationManifest Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">app.manifest</ApplicationManifest>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-    <Compile Remove="MainForm.cs" />
-    <Compile Remove="MainForm.Designer.cs" />
-    <EmbeddedResource Remove="MainForm.resx" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Rampastring.Tools" Version="2.0.4" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
