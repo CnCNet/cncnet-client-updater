@@ -140,8 +140,7 @@ internal sealed class Program
 
                     using var _ = Process.Start(new ProcessStartInfo
                     {
-                        FileName = "dotnet",
-                        Arguments = launcherExeFile.FullName
+                        FileName = launcherExeFile.FullName
                     });
                 }
                 else

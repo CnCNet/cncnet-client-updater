@@ -1179,7 +1179,6 @@ public static class Updater
 
                 foreach (UpdaterFileInfo info in FileInfosToDownload)
                 {
-                    bool flag = false;
                     int num = 0;
 
                     if (terminateUpdate)
@@ -1195,7 +1194,7 @@ public static class Updater
                     {
                         currentFilename = info.Archived ? info.Filename + ARCHIVE_FILE_EXTENSION : info.Filename;
                         currentFileSize = info.Archived ? info.ArchiveSize : info.Size;
-                        flag = await DownloadFileAsync(client, info);
+                        bool flag = await DownloadFileAsync(client, info);
 
                         if (terminateUpdate)
                         {
@@ -1280,6 +1279,10 @@ public static class Updater
                         foreach (AssemblyName assembly in assemblies)
                         {
                             FileInfo updaterFile = SafePath.GetFile(GamePath, "Updater", "Resources", FormattableString.Invariant($"{assembly.Name}.dll"));
+
+                            if (!updaterFile.Exists)
+                                continue;
+
                             FileInfo updaterFileResource = SafePath.GetFile(ResourcePath, updaterFile.Name);
 
                             Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
