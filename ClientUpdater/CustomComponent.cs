@@ -170,12 +170,15 @@ public class CustomComponent
             {
                 AutomaticDecompression = DecompressionMethods.All
             };
-            using var client = new HttpClient(httpClientHandler, true)
+            using var progressMessageHandler = new ProgressMessageHandler(httpClientHandler);
+            using var client = new HttpClient(progressMessageHandler, true)
             {
                 DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
             };
 
-            client.DefaultRequestHeaders.UserAgent.Add(new(Updater.GetUserAgentString()));
+            Updater.AddUserAgent(client.DefaultRequestHeaders.UserAgent);
+
+            progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
 
             Logger.Log("CustomComponent: Downloading version info.");
 
@@ -204,9 +207,6 @@ public class CustomComponent
                 filesToCleanup.Add(versionFileName);
                 filesToCleanup.Add(downloadFileName);
 
-                using var progressMessageHandler = new ProgressMessageHandler(httpClientHandler);
-
-                progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
                 num++;
 
                 await using (var fileStream = new FileStream(downloadFileName, new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))

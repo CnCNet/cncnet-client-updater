@@ -26,6 +26,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Handlers;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -374,18 +375,14 @@ public static class Updater
         };
     }
 
-    /// <summary>
-    /// Gets user agent information as a string.
-    /// </summary>
-    /// <returns>User agent string.</returns>
-    internal static string GetUserAgentString()
+    internal static void AddUserAgent(HttpHeaderValueCollection<ProductInfoHeaderValue> httpHeaderValueCollection)
     {
-        string updaterString = string.Empty;
+        httpHeaderValueCollection.Add(new(LocalGame, GameVersion));
 
         if (UpdaterVersion != "N/A")
-            updaterString = " Updater/" + UpdaterVersion;
+            httpHeaderValueCollection.Add(new("Updater", UpdaterVersion));
 
-        return LocalGame + updaterString + " Game/" + GameVersion + " Client/" + Assembly.GetEntryAssembly().GetName().Version;
+        httpHeaderValueCollection.Add(new("Client", Assembly.GetEntryAssembly().GetName().Version.ToString()));
     }
 
     /// <summary>
@@ -597,7 +594,7 @@ public static class Updater
                     DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
                 };
 
-                client.DefaultRequestHeaders.UserAgent.Add(new(GetUserAgentString()));
+                AddUserAgent(client.DefaultRequestHeaders.UserAgent);
 
                 FileInfo downloadFile = SafePath.GetFile(GamePath, FormattableString.Invariant($"{VERSION_FILE}_u"));
 
@@ -769,12 +766,12 @@ public static class Updater
                 AutomaticDecompression = DecompressionMethods.All
             };
             using var progressMessageHandler = new ProgressMessageHandler(httpClientHandler);
-            using var client = new HttpClient(httpClientHandler, true)
+            using var client = new HttpClient(progressMessageHandler, true)
             {
                 DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
             };
 
-            client.DefaultRequestHeaders.UserAgent.Add(new(GetUserAgentString()));
+            AddUserAgent(client.DefaultRequestHeaders.UserAgent);
 
             progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
 
@@ -809,12 +806,12 @@ public static class Updater
                 AutomaticDecompression = DecompressionMethods.All
             };
             using var progressMessageHandler = new ProgressMessageHandler(httpClientHandler);
-            using var client = new HttpClient(httpClientHandler, true)
+            using var client = new HttpClient(progressMessageHandler, true)
             {
                 DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
             };
 
-            client.DefaultRequestHeaders.UserAgent.Add(new(GetUserAgentString()));
+            AddUserAgent(client.DefaultRequestHeaders.UserAgent);
 
             progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
 
@@ -1168,12 +1165,12 @@ public static class Updater
                     AutomaticDecompression = DecompressionMethods.All
                 };
                 using var progressMessageHandler = new ProgressMessageHandler(httpClientHandler);
-                using var client = new HttpClient(httpClientHandler, true)
+                using var client = new HttpClient(progressMessageHandler, true)
                 {
                     DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
                 };
 
-                client.DefaultRequestHeaders.UserAgent.Add(new(GetUserAgentString()));
+                AddUserAgent(client.DefaultRequestHeaders.UserAgent);
 
                 progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
 
@@ -1295,7 +1292,7 @@ public static class Updater
                         using var _ = Process.Start(new ProcessStartInfo
                         {
                             FileName = "dotnet",
-                            Arguments = " \"" + secondStageUpdaterResource.FullName + "\" " + CallingExecutableFileName + " \"" + GamePath + "\""
+                            Arguments = "\"" + secondStageUpdaterResource.FullName + "\" " + CallingExecutableFileName + " \"" + GamePath + "\""
                         });
 
                         Restart?.Invoke(null, EventArgs.Empty);
