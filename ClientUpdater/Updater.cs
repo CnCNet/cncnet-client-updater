@@ -1289,6 +1289,7 @@ public static class Updater
 
                         Logger.Log("Updater: Launching second-stage updater executable " + SECOND_STAGE_UPDATER + ".");
 
+                        // e.g. dotnet "C:\Game\Resources\SecondStageUpdater.dll" clientogl.dll "C:\Game\"
                         using var _ = Process.Start(new ProcessStartInfo
                         {
                             FileName = "dotnet",

@@ -18,24 +18,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace SecondStageUpdater;
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Rampastring.Tools;
 
 internal sealed class Program
 {
-    private static ConsoleColor defaultColor = Console.ForegroundColor;
+    private static ConsoleColor defaultColor;
 
     private static async Task Main(string[] args)
     {
+        defaultColor = Console.ForegroundColor;
+
         try
         {
             Write("CnCNet Client Second-Stage Updater", ConsoleColor.Green);
             Write(string.Empty);
 
+            // e.g. clientogl.dll "C:\Game\"
             if (args.Length < 2 || string.IsNullOrEmpty(args[0]) || string.IsNullOrEmpty(args[1]) || !SafePath.GetDirectory(args[1].Replace("\"", null)).Exists)
             {
                 Write("Invalid arguments given!", ConsoleColor.Red);
@@ -54,35 +59,54 @@ internal sealed class Program
                 Write("Base directory: " + baseDirectory.FullName);
                 Write("Waiting for the client (" + clientExecutable.Name + ") to exit..");
 
-                while (Process.GetProcessesByName(Path.GetFileNameWithoutExtension(clientExecutable.Name)).Any())
-                    await Task.Delay(10);
+                string clientMutexId = FormattableString.Invariant($"Global{Guid.Parse("1CC9F8E7-9F69-4BBC-B045-E734204027A9")}");
+                using var clientMutex = new Mutex(false, clientMutexId, out _);
+
+                try
+                {
+                    clientMutex.WaitOne(-1, false);
+                }
+                catch (AbandonedMutexException)
+                {
+                }
 
                 DirectoryInfo updaterDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Updater");
 
                 if (!updaterDirectory.Exists)
                 {
-                    Write($"{updaterDirectory.FullName} directory does not exist!", ConsoleColor.Red);
+                    Write($"{updaterDirectory.Name} directory does not exist!", ConsoleColor.Red);
                     Write("Press any key to exit.");
                     Console.ReadKey();
+                    Environment.Exit(1);
                 }
 
                 Write("Updating files.", ConsoleColor.Green);
 
-                var files = updaterDirectory.EnumerateFiles("*", SearchOption.AllDirectories).ToList();
+                IEnumerable<FileInfo> files = updaterDirectory.EnumerateFiles("*", SearchOption.AllDirectories);
                 FileInfo executableFile = SafePath.GetFile(Assembly.GetExecutingAssembly().Location);
+                FileInfo relativeExecutableFile = SafePath.GetFile(executableFile.FullName[baseDirectory.FullName.Length..]);
+                const string versionFileName = "version";
+
+                Write($"{nameof(SecondStageUpdater)}: {relativeExecutableFile}");
 
                 foreach (FileInfo fileInfo in files)
                 {
-                    Write(executableFile.FullName);
-                    Write(fileInfo.FullName);
+                    FileInfo relativeFileInfo = SafePath.GetFile(fileInfo.FullName[updaterDirectory.FullName.Length..]);
+                    AssemblyName[] assemblies = Assembly.LoadFrom(executableFile.FullName).GetReferencedAssemblies();
 
-                    if (Path.GetFileNameWithoutExtension(fileInfo.Name).Equals(Path.GetFileNameWithoutExtension(executableFile.Name), StringComparison.OrdinalIgnoreCase))
+                    if (relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(relativeExecutableFile.ToString()[..^relativeExecutableFile.Extension.Length], StringComparison.OrdinalIgnoreCase)
+                        || relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(SafePath.CombineFilePath("Resources", Path.GetFileNameWithoutExtension(relativeExecutableFile.Name)), StringComparison.OrdinalIgnoreCase))
                     {
-                        Write($"Skipping {fileInfo.FullName}");
+                        Write($"Skipping {nameof(SecondStageUpdater)} file {relativeFileInfo}");
                     }
-                    else if (fileInfo.Name == "version")
+                    else if (assemblies.Any(q => relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(q.Name, StringComparison.OrdinalIgnoreCase))
+                        || assemblies.Any(q => relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(SafePath.CombineFilePath("Resources", q.Name), StringComparison.OrdinalIgnoreCase)))
                     {
-                        Write("Skipping version");
+                        Write($"Skipping {nameof(SecondStageUpdater)} dependency {relativeFileInfo}");
+                    }
+                    else if (relativeFileInfo.ToString().Equals(versionFileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Write($"Skipping {relativeFileInfo}");
                     }
                     else
                     {
@@ -103,12 +127,15 @@ internal sealed class Program
                     }
                 }
 
-                FileInfo versionFile = SafePath.GetFile(updaterDirectory.FullName, "version");
+                FileInfo versionFile = SafePath.GetFile(updaterDirectory.FullName, versionFileName);
 
                 if (versionFile.Exists)
                 {
-                    Write(versionFile.FullName);
-                    versionFile.CopyTo(SafePath.CombineFilePath(baseDirectory.FullName, versionFile.Name), true);
+                    FileInfo destinationFile = SafePath.GetFile(baseDirectory.FullName, versionFile.Name);
+                    FileInfo relativeFileInfo = SafePath.GetFile(destinationFile.FullName[baseDirectory.FullName.Length..]);
+
+                    Write($"Updating {relativeFileInfo}");
+                    versionFile.CopyTo(destinationFile.FullName, true);
                 }
 
                 Write("Files successfully updated. Starting launcher..", ConsoleColor.Green);
@@ -129,7 +156,7 @@ internal sealed class Program
                 }
                 catch (Exception ex)
                 {
-                    Write($"Failed to read ClientDefinitions.ini: {ex.Message}", ConsoleColor.Yellow);
+                    Write($"Failed to read ClientDefinitions.ini: {ex}", ConsoleColor.Yellow);
                 }
 
                 FileInfo launcherExeFile = SafePath.GetFile(baseDirectory.FullName, launcherExe);
@@ -150,14 +177,12 @@ internal sealed class Program
                     Console.ReadKey();
                     Environment.Exit(1);
                 }
-
-                Environment.Exit(0);
             }
         }
         catch (Exception ex)
         {
             Write("An error occured during the Launcher Updater's operation.", ConsoleColor.Red);
-            Write("Returned error was: " + ex.Message);
+            Write($"Returned error was: {ex}");
             Write(string.Empty);
             Write("If you were updating a game, please try again. If the problem continues, contact the staff for support.");
             Write("Press any key to exit.");
