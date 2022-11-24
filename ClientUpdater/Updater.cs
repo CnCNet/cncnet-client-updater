@@ -26,7 +26,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Handlers;
-using System.Net.Http.Headers;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -138,11 +137,27 @@ public static class Updater
     private static readonly List<UpdaterFileInfo> ServerFileInfos = new();
     public static readonly List<UpdaterFileInfo> LocalFileInfos = new();
 
+    internal static readonly HttpClient SharedHttpClient;
+    internal static readonly ProgressMessageHandler SharedProgressMessageHandler;
+
     // Current update / download related.
     private static bool terminateUpdate;
     private static string currentFilename;
     private static int currentFileSize;
     private static int totalDownloadedKbs;
+
+    static Updater()
+    {
+        SharedProgressMessageHandler = new ProgressMessageHandler(new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(15),
+            AutomaticDecompression = DecompressionMethods.All
+        });
+        SharedHttpClient = new HttpClient(SharedProgressMessageHandler, true)
+        {
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+        };
+    }
 
     /// <summary>
     /// Initializes the updater.
@@ -375,14 +390,15 @@ public static class Updater
         };
     }
 
-    internal static void AddUserAgent(HttpHeaderValueCollection<ProductInfoHeaderValue> httpHeaderValueCollection)
+    internal static void UpdateUserAgent()
     {
-        httpHeaderValueCollection.Add(new(LocalGame, GameVersion));
+        SharedHttpClient.DefaultRequestHeaders.UserAgent.Clear();
+        SharedHttpClient.DefaultRequestHeaders.UserAgent.Add(new(LocalGame, GameVersion));
 
         if (UpdaterVersion != "N/A")
-            httpHeaderValueCollection.Add(new("Updater", UpdaterVersion));
+            SharedHttpClient.DefaultRequestHeaders.UserAgent.Add(new("Updater", UpdaterVersion));
 
-        httpHeaderValueCollection.Add(new("Client", Assembly.GetEntryAssembly().GetName().Version.ToString()));
+        SharedHttpClient.DefaultRequestHeaders.UserAgent.Add(new("Client", Assembly.GetEntryAssembly().GetName().Version.ToString()));
     }
 
     /// <summary>
@@ -585,16 +601,7 @@ public static class Updater
             {
                 Logger.Log("Updater: Checking version on the server.");
 
-                var httpClientHandler = new HttpClientHandler
-                {
-                    AutomaticDecompression = DecompressionMethods.All
-                };
-                using var client = new HttpClient(httpClientHandler, true)
-                {
-                    DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-                };
-
-                AddUserAgent(client.DefaultRequestHeaders.UserAgent);
+                UpdateUserAgent();
 
                 FileInfo downloadFile = SafePath.GetFile(GamePath, FormattableString.Invariant($"{VERSION_FILE}_u"));
 
@@ -606,7 +613,7 @@ public static class Updater
 
                         await using (var fileStream = new FileStream(downloadFile.FullName, new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
                         {
-                            await using (Stream stream = await client.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + VERSION_FILE))
+                            await using (Stream stream = await SharedHttpClient.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + VERSION_FILE))
                             {
                                 await stream.CopyToAsync(fileStream);
                             }
@@ -761,23 +768,9 @@ public static class Updater
         Logger.Log("Updater: Downloading updateexec.");
         try
         {
-            var httpClientHandler = new HttpClientHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All
-            };
-            using var progressMessageHandler = new ProgressMessageHandler(httpClientHandler);
-            using var client = new HttpClient(progressMessageHandler, true)
-            {
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
-
-            AddUserAgent(client.DefaultRequestHeaders.UserAgent);
-
-            progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
-
             await using (var fileStream = new FileStream(SafePath.CombineFilePath(GamePath, "updateexec"), new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
             {
-                await using (Stream stream = await client.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + "updateexec"))
+                await using (Stream stream = await SharedHttpClient.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + "updateexec"))
                 {
                     await stream.CopyToAsync(fileStream);
                 }
@@ -801,23 +794,9 @@ public static class Updater
         Logger.Log("Updater: Downloading preupdateexec.");
         try
         {
-            var httpClientHandler = new HttpClientHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All
-            };
-            using var progressMessageHandler = new ProgressMessageHandler(httpClientHandler);
-            using var client = new HttpClient(progressMessageHandler, true)
-            {
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
-
-            AddUserAgent(client.DefaultRequestHeaders.UserAgent);
-
-            progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
-
             await using (var fileStream = new FileStream(SafePath.CombineFilePath(GamePath, "preupdateexec"), new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
             {
-                await using (Stream stream = await client.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + "preupdateexec"))
+                await using (Stream stream = await SharedHttpClient.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + "preupdateexec"))
                 {
                     await stream.CopyToAsync(fileStream);
                 }
@@ -1138,6 +1117,10 @@ public static class Updater
 
         try
         {
+            UpdateUserAgent();
+
+            SharedProgressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
+
             if (!await ExecutePreUpdateScriptAsync())
                 throw new("Executing preupdateexec failed.");
 
@@ -1160,20 +1143,6 @@ public static class Updater
             }
             else
             {
-                var httpClientHandler = new HttpClientHandler
-                {
-                    AutomaticDecompression = DecompressionMethods.All
-                };
-                using var progressMessageHandler = new ProgressMessageHandler(httpClientHandler);
-                using var client = new HttpClient(progressMessageHandler, true)
-                {
-                    DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-                };
-
-                AddUserAgent(client.DefaultRequestHeaders.UserAgent);
-
-                progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
-
                 foreach (UpdaterFileInfo info in FileInfosToDownload)
                 {
                     int num = 0;
@@ -1191,7 +1160,7 @@ public static class Updater
                     {
                         currentFilename = info.Archived ? info.Filename + ARCHIVE_FILE_EXTENSION : info.Filename;
                         currentFileSize = info.Archived ? info.ArchiveSize : info.Size;
-                        bool flag = await DownloadFileAsync(client, info);
+                        bool flag = await DownloadFileAsync(info);
 
                         if (terminateUpdate)
                         {
@@ -1320,15 +1289,18 @@ public static class Updater
             VersionState = VersionState.UNKNOWN;
             DoOnUpdateFailed(exception);
         }
+        finally
+        {
+            SharedProgressMessageHandler.HttpReceiveProgress -= ProgressMessageHandlerOnHttpReceiveProgress;
+        }
     }
 
     /// <summary>
     /// Downloads and handles individual file.
     /// </summary>
-    /// <param name="client">Web client instance to use to download the file.</param>
     /// <param name="fileInfo">File info for the file.</param>
     /// <returns>True if successful, otherwise false.</returns>
-    private static async Task<bool> DownloadFileAsync(HttpClient client, UpdaterFileInfo fileInfo)
+    private static async Task<bool> DownloadFileAsync(UpdaterFileInfo fileInfo)
     {
         Logger.Log("Updater: Initiliazing download of file " + fileInfo.Filename);
 
@@ -1360,7 +1332,7 @@ public static class Updater
 
                 await using (var fileStream = new FileStream(downloadFile.FullName, new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
                 {
-                    await using (Stream stream = await client.GetStreamAsync(new Uri(uriString)))
+                    await using (Stream stream = await SharedHttpClient.GetStreamAsync(new Uri(uriString)))
                     {
                         await stream.CopyToAsync(fileStream);
                     }
