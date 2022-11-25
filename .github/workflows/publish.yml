@@ -39,4 +39,4 @@ jobs:
     - name: Pack
       run: dotnet pack ClientUpdater\ClientUpdater.csproj --configuration Release -p:AssemblyVersion=$env:GitVersion_AssemblySemVer -p:FileVersion=$env:GitVersion_AssemblySemFileVer -p:InformationalVersion=$env:GitVersion_InformationalVersion -p:PackageVersion=$env:GitVersion_NuGetVersionV2
     - name: Push
-      run: dotnet nuget push ClientUpdater\bin\Release\*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/CnCNet/index.json
+      run: dotnet nuget push ClientUpdater\bin\Release\*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source ${{ format('https://nuget.pkg.github.com/{0}/index.json', GITHUB_REPOSITORY_OWNER) }}
