@@ -165,10 +165,12 @@ internal sealed class Program
                 {
                     Write("Launcher executable found: " + launcherExe, ConsoleColor.Green);
 
+#pragma warning disable SA1312 // Variable names should begin with lower-case letter
                     using var _ = Process.Start(new ProcessStartInfo
                     {
                         FileName = launcherExeFile.FullName
                     });
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
                 }
                 else
                 {

@@ -6,6 +6,7 @@
 //     the code is regenerated.
 // </auto-generated>
 // ------------------------------------------------------------------------------
+#pragma warning disable CS1591, CS8073
 
 // LzmaEncoder.cs
 

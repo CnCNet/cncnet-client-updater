@@ -228,7 +228,7 @@ public class CustomComponent
 
                     cancellationToken.ThrowIfCancellationRequested();
                     Logger.Log("CustomComponent: Archive " + archiveLocalPath + "_u is intact. Unpacking...");
-                    CompressionHelper.DecompressFile(archivePathFileInfo.FullName, finalFileNameTemp, downloadTaskCancelToken);
+                    await CompressionHelper.DecompressFileAsync(archivePathFileInfo.FullName, finalFileNameTemp, downloadTaskCancelToken);
                     archivePathFileInfo.Delete();
                 }
 

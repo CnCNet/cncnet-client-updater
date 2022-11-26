@@ -20,6 +20,7 @@ namespace ClientUpdater.Compression;
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using SevenZip.Compression.LZMA;
 
 /// <summary>
@@ -32,17 +33,16 @@ public static class CompressionHelper
     /// </summary>
     /// <param name="inputFilename">Input file path.</param>
     /// <param name="outputFilename">Output file path.</param>
-    public static void CompressFile(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
+    public static async Task CompressFileAsync(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
     {
         var encoder = new Encoder(cancellationToken);
 
-        using (FileStream inputStream = File.OpenRead(inputFilename))
+        await using (var inputStream = new FileStream(inputFilename, new FileStreamOptions { Access = FileAccess.Read, BufferSize = 0, Mode = FileMode.Open, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
         {
-            using (FileStream outputStream = File.Create(outputFilename))
+            await using (var outputStream = new FileStream(outputFilename, new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
             {
                 encoder.WriteCoderProperties(outputStream);
-                outputStream.Write(BitConverter.GetBytes(inputStream.Length), 0, 8);
-
+                await outputStream.WriteAsync(BitConverter.GetBytes(inputStream.Length).AsMemory(0, 8), cancellationToken);
                 encoder.Code(inputStream, outputStream, inputStream.Length, outputStream.Length, null);
             }
         }
@@ -53,23 +53,21 @@ public static class CompressionHelper
     /// </summary>
     /// <param name="inputFilename">Input file path.</param>
     /// <param name="outputFilename">Output file path.</param>
-    public static void DecompressFile(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
+    public static async Task DecompressFileAsync(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
     {
         var decoder = new Decoder(cancellationToken);
 
-        using (FileStream inputStream = File.OpenRead(inputFilename))
+        await using (var inputStream = new FileStream(inputFilename, new FileStreamOptions { Access = FileAccess.Read, BufferSize = 0, Mode = FileMode.Open, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
         {
-            using (FileStream outputStream = File.Create(outputFilename))
+            await using (var outputStream = new FileStream(outputFilename, new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
             {
                 byte[] properties = new byte[5];
-                inputStream.Read(properties, 0, properties.Length);
-
                 byte[] fileLengthArray = new byte[sizeof(long)];
-                inputStream.Read(fileLengthArray, 0, fileLengthArray.Length);
                 long fileLength = BitConverter.ToInt64(fileLengthArray, 0);
 
+                await inputStream.ReadAsync(properties, cancellationToken);
+                await inputStream.ReadAsync(fileLengthArray, cancellationToken);
                 decoder.SetDecoderProperties(properties);
-
                 decoder.Code(inputStream, outputStream, inputStream.Length, fileLength, null);
             }
         }

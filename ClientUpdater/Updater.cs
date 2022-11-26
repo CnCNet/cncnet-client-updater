@@ -1349,7 +1349,7 @@ public static class Updater
                     if (string.IsNullOrEmpty(archiveIdentifier))
                     {
                         Logger.Log("Updater: Archive " + filename + extraExtension + " is intact. Unpacking...");
-                        CompressionHelper.DecompressFile(downloadFile.FullName, decompressedFile.FullName);
+                        await CompressionHelper.DecompressFileAsync(downloadFile.FullName, decompressedFile.FullName);
                         downloadFile.Delete();
                     }
                     else

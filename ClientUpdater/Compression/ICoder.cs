@@ -6,6 +6,7 @@
 //     the code is regenerated.
 // </auto-generated>
 // ------------------------------------------------------------------------------
+#pragma warning disable CS1570, CS1591
 
 // ICoder.h
 
