@@ -20,6 +20,8 @@ namespace ClientUpdater;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Net.Http.Handlers;
 using System.Threading;
 using System.Threading.Tasks;
@@ -151,9 +153,21 @@ public class CustomComponent
     /// </summary>
     private async Task DoDownloadComponentAsync(CancellationToken cancellationToken)
     {
+        ProgressMessageHandler progressMessageHandler = null;
+
         try
         {
             Logger.Log("CustomComponent: Initializing download of custom component: " + GUIName);
+
+            progressMessageHandler = new ProgressMessageHandler(new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(15),
+                AutomaticDecompression = DecompressionMethods.All
+            });
+            using var httpClient = new HttpClient(progressMessageHandler, true)
+            {
+                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+            };
 
             IsBeingDownloaded = true;
             currentDownloadPercentage = -1;
@@ -163,14 +177,14 @@ public class CustomComponent
             string finalFileNameTemp = FormattableString.Invariant($"{finalFileName}_u");
             string versionFileName = SafePath.CombineFilePath(Updater.GamePath, FormattableString.Invariant($"{Updater.VERSION_FILE}_cc"));
             Updater.CreatePath(finalFileName);
-            Updater.UpdateUserAgent();
+            Updater.UpdateUserAgent(httpClient);
 
-            Updater.SharedProgressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
+            progressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
 
             Logger.Log("CustomComponent: Downloading version info.");
             await using (var fileStream = new FileStream(versionFileName, new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
             {
-                await using (Stream stream = await Updater.SharedHttpClient.GetStreamAsync(new Uri(uriString), cancellationToken))
+                await using (Stream stream = await httpClient.GetStreamAsync(new Uri(uriString), cancellationToken))
                 {
                     await stream.CopyToAsync(fileStream, cancellationToken);
                 }
@@ -197,7 +211,7 @@ public class CustomComponent
 
                 await using (var fileStream = new FileStream(downloadFileName, new FileStreamOptions { Access = FileAccess.Write, BufferSize = 0, Mode = FileMode.Create, Options = FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough, Share = FileShare.None }))
                 {
-                    await using (Stream stream = await Updater.SharedHttpClient.GetStreamAsync(downloadUri, cancellationToken))
+                    await using (Stream stream = await httpClient.GetStreamAsync(downloadUri, cancellationToken))
                     {
                         await stream.CopyToAsync(fileStream, cancellationToken);
                     }
@@ -308,7 +322,9 @@ public class CustomComponent
         {
             downloadTaskCancelTokenSource.Dispose();
             downloadTaskCancelTokenSource = null;
-            Updater.SharedProgressMessageHandler.HttpReceiveProgress -= ProgressMessageHandlerOnHttpReceiveProgress;
+
+            if (progressMessageHandler is not null)
+                progressMessageHandler.HttpReceiveProgress -= ProgressMessageHandlerOnHttpReceiveProgress;
         }
     }
 

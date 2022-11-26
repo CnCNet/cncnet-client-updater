@@ -137,8 +137,8 @@ public static class Updater
     private static readonly List<UpdaterFileInfo> ServerFileInfos = new();
     public static readonly List<UpdaterFileInfo> LocalFileInfos = new();
 
-    internal static readonly HttpClient SharedHttpClient;
-    internal static readonly ProgressMessageHandler SharedProgressMessageHandler;
+    private static readonly HttpClient SharedHttpClient;
+    private static readonly ProgressMessageHandler SharedProgressMessageHandler;
 
     // Current update / download related.
     private static bool terminateUpdate;
@@ -390,15 +390,15 @@ public static class Updater
         };
     }
 
-    internal static void UpdateUserAgent()
+    internal static void UpdateUserAgent(HttpClient httpClient)
     {
-        SharedHttpClient.DefaultRequestHeaders.UserAgent.Clear();
-        SharedHttpClient.DefaultRequestHeaders.UserAgent.Add(new(LocalGame, GameVersion));
+        httpClient.DefaultRequestHeaders.UserAgent.Clear();
+        httpClient.DefaultRequestHeaders.UserAgent.Add(new(LocalGame, GameVersion));
 
         if (UpdaterVersion != "N/A")
-            SharedHttpClient.DefaultRequestHeaders.UserAgent.Add(new("Updater", UpdaterVersion));
+            httpClient.DefaultRequestHeaders.UserAgent.Add(new("Updater", UpdaterVersion));
 
-        SharedHttpClient.DefaultRequestHeaders.UserAgent.Add(new("Client", Assembly.GetEntryAssembly().GetName().Version.ToString()));
+        httpClient.DefaultRequestHeaders.UserAgent.Add(new("Client", Assembly.GetEntryAssembly().GetName().Version.ToString()));
     }
 
     /// <summary>
@@ -601,7 +601,7 @@ public static class Updater
             {
                 Logger.Log("Updater: Checking version on the server.");
 
-                UpdateUserAgent();
+                UpdateUserAgent(SharedHttpClient);
 
                 FileInfo downloadFile = SafePath.GetFile(GamePath, FormattableString.Invariant($"{VERSION_FILE}_u"));
 
@@ -1117,7 +1117,7 @@ public static class Updater
 
         try
         {
-            UpdateUserAgent();
+            UpdateUserAgent(SharedHttpClient);
 
             SharedProgressMessageHandler.HttpReceiveProgress += ProgressMessageHandlerOnHttpReceiveProgress;
 
