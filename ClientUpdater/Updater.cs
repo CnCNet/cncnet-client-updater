@@ -36,8 +36,9 @@ using Rampastring.Tools;
 
 public static class Updater
 {
-    public const string SECOND_STAGE_UPDATER = "SecondStageUpdater.dll";
-    public static string VERSION_FILE = "version";
+    private const string SECOND_STAGE_UPDATER = "SecondStageUpdater.dll";
+
+    public const string VERSION_FILE = "version";
     public const string ARCHIVE_FILE_EXTENSION = ".lzma";
 
     /// <summary>
@@ -73,8 +74,10 @@ public static class Updater
     /// <summary>
     /// Update server URL for current update mirror if available.
     /// </summary>
-    public static string CurrentUpdateServerURL => updateMirrors is { Count: > 0 } ?
-        updateMirrors[currentUpdateMirrorIndex].URL : null;
+    public static string CurrentUpdateServerURL
+        => updateMirrors is { Count: > 0 }
+            ? updateMirrors[currentUpdateMirrorIndex].URL
+            : null;
 
     private static VersionState _versionState = VersionState.UNKNOWN;
 
@@ -83,10 +86,7 @@ public static class Updater
     /// </summary>
     public static VersionState VersionState
     {
-        get
-        {
-            return _versionState;
-        }
+        get => _versionState;
 
         private set
         {
@@ -135,7 +135,7 @@ public static class Updater
     // File infos.
     private static readonly List<UpdaterFileInfo> FileInfosToDownload = new();
     private static readonly List<UpdaterFileInfo> ServerFileInfos = new();
-    public static readonly List<UpdaterFileInfo> LocalFileInfos = new();
+    private static readonly List<UpdaterFileInfo> LocalFileInfos = new();
 
     private static readonly HttpClient SharedHttpClient;
     private static readonly ProgressMessageHandler SharedProgressMessageHandler;
@@ -189,10 +189,13 @@ public static class Updater
             foreach (string str in sectionKeys)
             {
                 string value = settingsINI.GetStringValue("DownloadMirrors", str, string.Empty);
-                UpdateMirror item = updateMirrors.Find(um => um.Name == value);
-                if (item != null && !list.Contains(item))
+
+                if (updateMirrors.Any(um => value.Equals(um.Name, StringComparison.OrdinalIgnoreCase)))
                 {
-                    list.Add(item);
+                    UpdateMirror item = updateMirrors.Single(um => value.Equals(um.Name, StringComparison.OrdinalIgnoreCase));
+
+                    if (!list.Contains(item))
+                        list.Add(item);
                 }
             }
         }
@@ -200,9 +203,7 @@ public static class Updater
         foreach (UpdateMirror mirror2 in updateMirrors)
         {
             if (!list.Contains(mirror2))
-            {
                 list.Add(mirror2);
-            }
         }
 
         updateMirrors = list;
@@ -215,11 +216,9 @@ public static class Updater
     {
         Logger.Log("Updater: Checking for updates.");
         if (VersionState is not VersionState.UPDATECHECKINPROGRESS and not VersionState.UPDATEINPROGRESS)
-        {
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             DoVersionCheckAsync();
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        }
     }
 
     /// <summary>
@@ -247,11 +246,10 @@ public static class Updater
 
                 if (strArray.Length >= 2)
                 {
-                    var item = new UpdaterFileInfo
+                    var item = new UpdaterFileInfo(
+                        SafePath.CombineFilePath(str), Conversions.IntFromString(strArray[1], 0))
                     {
-                        Filename = SafePath.CombineFilePath(str),
                         Identifier = strArray[0],
-                        Size = Conversions.IntFromString(strArray[1], 0),
                         ArchiveIdentifier = archiveAvailable ? strArrayArch[0] : string.Empty,
                         ArchiveSize = archiveAvailable ? Conversions.IntFromString(strArrayArch[1], 0) : 0
                     };
@@ -380,11 +378,9 @@ public static class Updater
     /// <param name="archiveSize">Archive file size.</param>
     internal static UpdaterFileInfo CreateFileInfo(string filename, string identifier, int size, string archiveIdentifier = null, int archiveSize = 0)
     {
-        return new()
+        return new(SafePath.CombineFilePath(filename), size)
         {
-            Filename = SafePath.CombineFilePath(filename),
             Identifier = identifier,
-            Size = size,
             ArchiveIdentifier = archiveIdentifier,
             ArchiveSize = archiveSize
         };
@@ -409,17 +405,16 @@ public static class Updater
     internal static void DeleteFileAndWait(string filepath, int timeout = 10000)
     {
         FileInfo fileInfo = SafePath.GetFile(filepath);
-        using (var fw = new FileSystemWatcher(fileInfo.DirectoryName, fileInfo.Name))
-        using (var mre = new ManualResetEventSlim())
+        using var fw = new FileSystemWatcher(fileInfo.DirectoryName, fileInfo.Name);
+        using var mre = new ManualResetEventSlim();
+
+        fw.EnableRaisingEvents = true;
+        fw.Deleted += (_, _) =>
         {
-            fw.EnableRaisingEvents = true;
-            fw.Deleted += (object sender, FileSystemEventArgs e) =>
-            {
-                mre.Set();
-            };
-            fileInfo.Delete();
-            mre.Wait(timeout);
-        }
+            mre.Set();
+        };
+        fileInfo.Delete();
+        mre.Wait(timeout);
     }
 
     /// <summary>
@@ -441,10 +436,9 @@ public static class Updater
         using FileStream fs = SafePath.GetFile(GamePath, filePath).OpenRead();
         md.ComputeHash(fs);
         var builder = new StringBuilder();
+
         foreach (byte num2 in md.Hash)
-        {
             builder.Append(num2);
-        }
 
         md.Clear();
         return builder.ToString();
@@ -700,9 +694,7 @@ public static class Updater
                 }
 
                 if (string.IsNullOrEmpty(versionString))
-                {
                     throw new("Update server integrity error while checking for updates.");
-                }
 
                 Logger.Log("Updater: Server game version is " + versionString + ", local version is " + GameVersion);
                 ServerGameVersion = versionString;
@@ -752,9 +744,7 @@ public static class Updater
         foreach (CustomComponent component in customComponents)
         {
             if (SafePath.GetFile(GamePath, component.LocalPath).Exists && component.RemoteIdentifier != component.LocalIdentifier)
-            {
                 return true;
-            }
         }
 
         return false;
