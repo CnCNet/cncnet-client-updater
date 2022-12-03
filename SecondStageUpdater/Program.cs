@@ -34,13 +34,6 @@ internal sealed class Program
     private static async Task Main(string[] args)
     {
         defaultColor = Console.ForegroundColor;
-#if DEBUG
-        args = new[]
-        {
-            "clientogl.dll",
-            "\"C:\\Users\\RansAckeR\\source\\repos\\xna-cncnet-client\\DXMainClient\\bin\\Debug\\YR\\\""
-        };
-#endif
 
         try
         {

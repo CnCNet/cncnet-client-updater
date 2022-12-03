@@ -8,15 +8,11 @@
     <Product></Product>
     <Copyright>Copyright © CnCNet 2022</Copyright>
     <Trademark></Trademark>
-    <Version>1.0.0.1</Version>
-    <FileVersion>1.0.0.1</FileVersion>
-    <InformationalVersion>1.0.0.1</InformationalVersion>
     <AssemblyName>SecondStageUpdater</AssemblyName>
     <RootNamespace>SecondStageUpdater</RootNamespace>
     <ComVisible>false</ComVisible>
     <CLSCompliant>false</CLSCompliant>
-    <AnalysisLevel>preview-all</AnalysisLevel>
-    <LangVersion>preview</LangVersion>
+    <AnalysisLevel>latest-all</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <Platforms>AnyCPU</Platforms>
     <ComVisible>false</ComVisible>
