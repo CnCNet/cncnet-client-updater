@@ -384,7 +384,9 @@ public static class Updater
     internal static void UpdateUserAgent(HttpClient httpClient)
     {
         httpClient.DefaultRequestHeaders.UserAgent.Clear();
-        httpClient.DefaultRequestHeaders.UserAgent.Add(new(LocalGame, GameVersion));
+
+        if (GameVersion != "N/A")
+            httpClient.DefaultRequestHeaders.UserAgent.Add(new(LocalGame, GameVersion));
 
         if (UpdaterVersion != "N/A")
             httpClient.DefaultRequestHeaders.UserAgent.Add(new(nameof(Updater), UpdaterVersion));
