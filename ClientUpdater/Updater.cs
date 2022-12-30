@@ -1244,32 +1244,37 @@ public static class Updater
 
                     if (updaterDirectoryInfo.Exists)
                     {
-                        IEnumerable<FileInfo> updaterFiles = SafePath.GetDirectory(updaterDirectoryInfo.FullName, "Resources").EnumerateFiles(Path.GetFileNameWithoutExtension(SECOND_STAGE_UPDATER) + ".*");
-
-                        foreach (FileInfo updaterFile in updaterFiles)
-                        {
-                            FileInfo updaterFileResource = SafePath.GetFile(ResourcePath, updaterFile.Name);
-
-                            Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
-
-                            updaterFile.MoveTo(updaterFileResource.FullName, true);
-                        }
-
                         FileInfo secondStageUpdaterResource = SafePath.GetFile(ResourcePath, SECOND_STAGE_UPDATER);
-                        AssemblyName[] assemblies = Assembly.LoadFrom(secondStageUpdaterResource.FullName).GetReferencedAssemblies();
+                        DirectoryInfo updaterResourcesDirectory = SafePath.GetDirectory(updaterDirectoryInfo.FullName, "Resources");
 
-                        foreach (AssemblyName assembly in assemblies)
+                        if (updaterResourcesDirectory.Exists)
                         {
-                            FileInfo updaterFile = SafePath.GetFile(updaterDirectoryInfo.FullName, "Resources", FormattableString.Invariant($"{assembly.Name}.dll"));
+                            IEnumerable<FileInfo> updaterFiles = updaterResourcesDirectory.EnumerateFiles(Path.GetFileNameWithoutExtension(SECOND_STAGE_UPDATER) + ".*");
 
-                            if (!updaterFile.Exists)
-                                continue;
+                            foreach (FileInfo updaterFile in updaterFiles)
+                            {
+                                FileInfo updaterFileResource = SafePath.GetFile(ResourcePath, updaterFile.Name);
 
-                            FileInfo updaterFileResource = SafePath.GetFile(ResourcePath, updaterFile.Name);
+                                Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
 
-                            Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
+                                updaterFile.MoveTo(updaterFileResource.FullName, true);
+                            }
 
-                            updaterFile.MoveTo(updaterFileResource.FullName, true);
+                            AssemblyName[] assemblies = Assembly.LoadFrom(secondStageUpdaterResource.FullName).GetReferencedAssemblies();
+
+                            foreach (AssemblyName assembly in assemblies)
+                            {
+                                FileInfo updaterFile = SafePath.GetFile(updaterResourcesDirectory.FullName, FormattableString.Invariant($"{assembly.Name}.dll"));
+
+                                if (!updaterFile.Exists)
+                                    continue;
+
+                                FileInfo updaterFileResource = SafePath.GetFile(ResourcePath, updaterFile.Name);
+
+                                Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
+
+                                updaterFile.MoveTo(updaterFileResource.FullName, true);
+                            }
                         }
 
                         Logger.Log("Updater: Launching second-stage updater executable " + SECOND_STAGE_UPDATER + ".");

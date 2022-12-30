@@ -53,7 +53,7 @@ internal sealed class Program
             else
             {
                 FileInfo clientExecutable = SafePath.GetFile(args[0]);
-                DirectoryInfo baseDirectory = SafePath.GetDirectory(args[1].Replace("\"", null));
+                DirectoryInfo baseDirectory = SafePath.GetDirectory(args[1].Replace("\"", null, StringComparison.OrdinalIgnoreCase));
                 DirectoryInfo resourceDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Resources");
 
                 Write("Base directory: " + baseDirectory.FullName);
