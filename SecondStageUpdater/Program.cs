@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Rampastring.Tools;
@@ -141,10 +142,11 @@ internal sealed class Program
 
                 try
                 {
-                    Write("Checking ClientDefinitions.ini for launcher executable filename (LauncherExe).");
+                    Write("Checking ClientDefinitions.ini for launcher executable filename.");
 
                     string[] lines = await File.ReadAllLinesAsync(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini")).ConfigureAwait(false);
-                    string line = lines.Single(q => q.Trim().StartsWith("LauncherExe", StringComparison.OrdinalIgnoreCase) && q.Contains('=', StringComparison.OrdinalIgnoreCase));
+                    string launcherPropertyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "LauncherExe" : "UnixLauncherExe";
+                    string line = lines.Single(q => q.Trim().StartsWith(launcherPropertyName, StringComparison.OrdinalIgnoreCase) && q.Contains('=', StringComparison.OrdinalIgnoreCase));
                     int commentStart = line.IndexOf(';', StringComparison.OrdinalIgnoreCase);
 
                     if (commentStart >= 0)
@@ -181,7 +183,7 @@ internal sealed class Program
         }
         catch (Exception ex)
         {
-            Write("An error occured during the Launcher Updater's operation.", ConsoleColor.Red);
+            Write("An error occurred during the Launcher Updater's operation.", ConsoleColor.Red);
             Write($"Returned error was: {ex}");
             Write(string.Empty);
             Write("If you were updating a game, please try again. If the problem continues, contact the staff for support.");
