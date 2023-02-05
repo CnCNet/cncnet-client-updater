@@ -28,7 +28,11 @@ using Rampastring.Tools;
 
 internal sealed class Program
 {
+    private const int MutexTimeoutInSeconds = 30;
+
     private static ConsoleColor defaultColor;
+    private static bool hasHandle;
+    private static Mutex clientMutex;
 
     private static async Task Main(string[] args)
     {
@@ -45,9 +49,7 @@ internal sealed class Program
                 Write("Invalid arguments given!", ConsoleColor.Red);
                 Write("Usage: <client_executable_name> <base_directory>");
                 Write(string.Empty);
-                Write("Press any key to exit.");
-                Console.ReadKey();
-                Environment.Exit(1);
+                Exit(false);
             }
             else
             {
@@ -56,17 +58,25 @@ internal sealed class Program
                 DirectoryInfo resourceDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Resources");
 
                 Write("Base directory: " + baseDirectory.FullName);
-                Write("Waiting for the client (" + clientExecutable.Name + ") to exit..");
+                Write($"Waiting for the client ({clientExecutable.Name}) to exit..");
 
                 string clientMutexId = FormattableString.Invariant($"Global{Guid.Parse("1CC9F8E7-9F69-4BBC-B045-E734204027A9")}");
-                using var clientMutex = new Mutex(false, clientMutexId, out _);
+
+                clientMutex = new(false, clientMutexId, out _);
 
                 try
                 {
-                    clientMutex.WaitOne(-1, false);
+                    hasHandle = clientMutex.WaitOne(TimeSpan.FromSeconds(MutexTimeoutInSeconds), false);
                 }
                 catch (AbandonedMutexException)
                 {
+                    hasHandle = true;
+                }
+
+                if (!hasHandle)
+                {
+                    Write($"Timeout while waiting for the client ({clientExecutable.Name}) to exit!", ConsoleColor.Red);
+                    Exit(false);
                 }
 
                 DirectoryInfo updaterDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Updater");
@@ -74,9 +84,7 @@ internal sealed class Program
                 if (!updaterDirectory.Exists)
                 {
                     Write($"{updaterDirectory.Name} directory does not exist!", ConsoleColor.Red);
-                    Write("Press any key to exit.");
-                    Console.ReadKey();
-                    Environment.Exit(1);
+                    Exit(false);
                 }
 
                 Write("Updating files.", ConsoleColor.Green);
@@ -119,9 +127,8 @@ internal sealed class Program
                         catch (Exception ex)
                         {
                             Write($"Updating file failed! Returned error message: {ex}", ConsoleColor.Yellow);
-                            Write("Press any key to retry. If the problem persists, try to move the content of the \"Updater\" directory to the main directory manually or contact the staff for support.");
-                            Console.ReadKey();
-                            Environment.Exit(1);
+                            Write("If the problem persists, try to move the content of the \"Updater\" directory to the main directory manually or contact the staff for support.");
+                            Exit(false);
                         }
                     }
                 }
@@ -175,11 +182,11 @@ internal sealed class Program
                 else
                 {
                     Write("No suitable launcher executable found! Client will not automatically start after updater closes.", ConsoleColor.Yellow);
-                    Write("Press any key to exit.");
-                    Console.ReadKey();
-                    Environment.Exit(1);
+                    Exit(false);
                 }
             }
+
+            Exit(true);
         }
         catch (Exception ex)
         {
@@ -187,6 +194,20 @@ internal sealed class Program
             Write($"Returned error was: {ex}");
             Write(string.Empty);
             Write("If you were updating a game, please try again. If the problem continues, contact the staff for support.");
+            Exit(false);
+        }
+    }
+
+    private static void Exit(bool success)
+    {
+        if (hasHandle)
+        {
+            clientMutex.ReleaseMutex();
+            clientMutex.Dispose();
+        }
+
+        if (!success)
+        {
             Write("Press any key to exit.");
             Console.ReadKey();
             Environment.Exit(1);
