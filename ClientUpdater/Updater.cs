@@ -1387,7 +1387,7 @@ public static class Updater
                     }
                 }
 
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && downloadFile.Extension.Equals("sh", StringComparison.OrdinalIgnoreCase))
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && downloadFile.Extension.Equals(".sh", StringComparison.OrdinalIgnoreCase))
                 {
                     Logger.Log($"Updater: File {downloadFile.Name} is a script, adding execute permission.");
 
