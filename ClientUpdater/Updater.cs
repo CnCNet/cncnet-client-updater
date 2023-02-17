@@ -1391,10 +1391,11 @@ public static class Updater
                 {
                     Logger.Log($"Updater: File {downloadFile.Name} is a script, adding execute permission.");
 
+                    string escapedArgs = $"chmod +x {downloadFile.FullName}".Replace("\"", "\\\"");
                     using var chmodProcess = Process.Start(new ProcessStartInfo
                     {
                         FileName = "/bin/sh",
-                        Arguments = $"-c 'chmod +x \"{downloadFile.FullName}\"'",
+                        Arguments = $"-c \"{escapedArgs}\"",
                         CreateNoWindow = true
                     });
 

@@ -23,7 +23,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Rampastring.Tools;
 
 internal sealed class Program
@@ -34,7 +33,7 @@ internal sealed class Program
     private static bool hasHandle;
     private static Mutex clientMutex;
 
-    private static async Task Main(string[] args)
+    private static void Main(string[] args)
     {
         defaultColor = Console.ForegroundColor;
 
@@ -151,7 +150,7 @@ internal sealed class Program
                 {
                     Write("Checking ClientDefinitions.ini for launcher executable filename.");
 
-                    string[] lines = await File.ReadAllLinesAsync(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini")).ConfigureAwait(true);
+                    string[] lines = File.ReadAllLines(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini"));
                     string launcherPropertyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "LauncherExe" : "UnixLauncherExe";
                     string line = lines.Single(q => q.Trim().StartsWith(launcherPropertyName, StringComparison.OrdinalIgnoreCase) && q.Contains('=', StringComparison.OrdinalIgnoreCase));
                     int commentStart = line.IndexOf(';', StringComparison.OrdinalIgnoreCase);
