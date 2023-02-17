@@ -151,7 +151,7 @@ internal sealed class Program
                 {
                     Write("Checking ClientDefinitions.ini for launcher executable filename.");
 
-                    string[] lines = await File.ReadAllLinesAsync(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini")).ConfigureAwait(false);
+                    string[] lines = await File.ReadAllLinesAsync(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini")).ConfigureAwait(true);
                     string launcherPropertyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "LauncherExe" : "UnixLauncherExe";
                     string line = lines.Single(q => q.Trim().StartsWith(launcherPropertyName, StringComparison.OrdinalIgnoreCase) && q.Contains('=', StringComparison.OrdinalIgnoreCase));
                     int commentStart = line.IndexOf(';', StringComparison.OrdinalIgnoreCase);
