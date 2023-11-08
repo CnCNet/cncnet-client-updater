@@ -42,7 +42,6 @@
   <ItemGroup>
     <PackageReference Include="StandardSocketsHttpHandler" Version="2.2.0.5" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
     <PackageReference Include="Rampastring.Tools" Version="2.0.4" />
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
       <PrivateAssets>all</PrivateAssets>
@@ -53,18 +52,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.ValueTuple"
-                      Version="4.5.0"
-                      Condition="$(TargetFramework.StartsWith('net46'))" />
-    <PackageReference Include="System.Memory"
-                      Version="4.5.5"
-                      Condition="$(TargetFrameworkIdentifier) == '.NETStandard' or
-                             $(TargetFrameworkIdentifier) == '.NETFramework' or
-                             $(TargetFramework.StartsWith('netcoreapp2'))" />
-    <PackageReference Include="System.Threading.Tasks.Extensions"
-                      Version="4.5.4"
-                      Condition="$(TargetFramework) == 'netstandard2.0' or
-                             $(TargetFramework) == 'netcoreapp2.0' or
-                             $(TargetFrameworkIdentifier) == '.NETFramework'" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Memory" Version="4.5.5"/>
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4"/>
   </ItemGroup>
 </Project>

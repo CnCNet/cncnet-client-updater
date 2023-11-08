@@ -34,31 +34,13 @@ public static class CompressionHelper
     public static async ValueTask CompressFileAsync(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
     {
         var encoder = new Encoder(cancellationToken);
-        var inputStream = new FileStream(inputFilename, new FileStreamOptions
-        {
-            Access = FileAccess.Read,
-            Mode = FileMode.Open,
-            Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
-            Share = FileShare.None
-        });
 
-        await using (inputStream.ConfigureAwait(false))
-        {
-            var outputStream = new FileStream(outputFilename, new FileStreamOptions
-            {
-                Access = FileAccess.Write,
-                Mode = FileMode.Create,
-                Options = FileOptions.Asynchronous,
-                Share = FileShare.None
-            });
+        using var inputStream = new FileStream(inputFilename, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var outputStream = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
 
-            await using (outputStream.ConfigureAwait(false))
-            {
-                encoder.WriteCoderProperties(outputStream);
-                await outputStream.WriteAsync(BitConverter.GetBytes(inputStream.Length).AsMemory(0, 8), cancellationToken).ConfigureAwait(false);
-                encoder.Code(inputStream, outputStream, inputStream.Length, outputStream.Length, null);
-            }
-        }
+        encoder.WriteCoderProperties(outputStream);
+        await outputStream.WriteAsync(BitConverter.GetBytes(inputStream.Length).AsMemory(0, 8), cancellationToken).ConfigureAwait(false);
+        encoder.Code(inputStream, outputStream, inputStream.Length, outputStream.Length, null);
     }
 
     /// <summary>
@@ -69,37 +51,18 @@ public static class CompressionHelper
     public static async ValueTask DecompressFileAsync(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
     {
         var decoder = new Decoder(cancellationToken);
-        var inputStream = new FileStream(inputFilename, new FileStreamOptions
-        {
-            Access = FileAccess.Read,
-            Mode = FileMode.Open,
-            Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
-            Share = FileShare.None
-        });
+        using var inputStream = new FileStream(inputFilename, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var outputStream = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
 
-        await using (inputStream.ConfigureAwait(false))
-        {
-            var outputStream = new FileStream(outputFilename, new FileStreamOptions
-            {
-                Access = FileAccess.Write,
-                Mode = FileMode.Create,
-                Options = FileOptions.Asynchronous,
-                Share = FileShare.None
-            });
+        byte[] properties = new byte[5];
+        byte[] fileLengthArray = new byte[sizeof(long)];
 
-            await using (outputStream.ConfigureAwait(false))
-            {
-                byte[] properties = new byte[5];
-                byte[] fileLengthArray = new byte[sizeof(long)];
+        await inputStream.ReadAsync(properties, cancellationToken).ConfigureAwait(false);
+        await inputStream.ReadAsync(fileLengthArray, cancellationToken).ConfigureAwait(false);
 
-                await inputStream.ReadAsync(properties, cancellationToken).ConfigureAwait(false);
-                await inputStream.ReadAsync(fileLengthArray, cancellationToken).ConfigureAwait(false);
+        long fileLength = BitConverter.ToInt64(fileLengthArray, 0);
 
-                long fileLength = BitConverter.ToInt64(fileLengthArray, 0);
-
-                decoder.SetDecoderProperties(properties);
-                decoder.Code(inputStream, outputStream, inputStream.Length, fileLength, null);
-            }
-        }
+        decoder.SetDecoderProperties(properties);
+        decoder.Code(inputStream, outputStream, inputStream.Length, fileLength, null);
     }
 }
