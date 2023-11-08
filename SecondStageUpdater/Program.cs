@@ -42,7 +42,7 @@ internal sealed class Program
             Write(string.Empty);
 
             // e.g. clientogl.dll "C:\Game\"
-            if (args.Length < 2 || string.IsNullOrEmpty(args[0]) || string.IsNullOrEmpty(args[1]) || !SafePath.GetDirectory(args[1].Replace("\"", null, StringComparison.OrdinalIgnoreCase)).Exists)
+            if (args.Length < 2 || string.IsNullOrEmpty(args[0]) || string.IsNullOrEmpty(args[1]) || !SafePath.GetDirectory(args[1].Replace("\"", null)).Exists)
             {
                 Write("Invalid arguments given!", true, ConsoleColor.Red);
                 Write("Usage: <client_executable_name> <base_directory>");
@@ -52,7 +52,7 @@ internal sealed class Program
             else
             {
                 FileInfo clientExecutable = SafePath.GetFile(args[0]);
-                DirectoryInfo baseDirectory = SafePath.GetDirectory(args[1].Replace("\"", null, StringComparison.OrdinalIgnoreCase));
+                DirectoryInfo baseDirectory = SafePath.GetDirectory(args[1].Replace("\"", null));
                 DirectoryInfo resourceDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Resources");
                 FileInfo logFile = SafePath.GetFile(SafePath.CombineFilePath(baseDirectory.FullName, "Client", "SecondStageUpdater.log"));
 
@@ -166,10 +166,10 @@ internal sealed class Program
                 {
                     Write("Checking ClientDefinitions.ini for launcher executable filename.");
 
-                    string[] lines = await File.ReadAllLinesAsync(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini")).ConfigureAwait(false);
+                    string[] lines = File.ReadAllLines(SafePath.CombineFilePath(resourceDirectory.FullName, "ClientDefinitions.ini"));
                     string launcherPropertyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "LauncherExe" : "UnixLauncherExe";
-                    string line = lines.Single(q => q.Trim().StartsWith(launcherPropertyName, StringComparison.OrdinalIgnoreCase) && q.Contains('=', StringComparison.OrdinalIgnoreCase));
-                    int commentStart = line.IndexOf(';', StringComparison.OrdinalIgnoreCase);
+                    string line = lines.Single(q => q.Trim().StartsWith(launcherPropertyName, StringComparison.OrdinalIgnoreCase) && q.Contains('='));
+                    int commentStart = line.IndexOf(';');
 
                     if (commentStart >= 0)
                         line = line[..commentStart];
@@ -234,27 +234,13 @@ internal sealed class Program
             try
             {
                 FileInfo destinationFile = SafePath.GetFile(baseDirectory.FullName, relativeFileInfo.ToString());
-                FileStream sourceFileStream = sourceFileInfo.Open(new FileStreamOptions
-                {
-                    Access = FileAccess.Read,
-                    Mode = FileMode.Open,
-                    Options = FileOptions.Asynchronous,
-                    Share = FileShare.None
-                });
-                await using (sourceFileStream.ConfigureAwait(false))
-                {
-                    FileStream destinationFileStream = destinationFile.Open(new FileStreamOptions
-                    {
-                        Access = FileAccess.Write,
-                        Mode = FileMode.Create,
-                        Options = FileOptions.Asynchronous,
-                        Share = FileShare.None
-                    });
-                    await using (destinationFileStream.ConfigureAwait(false))
-                    {
-                        await sourceFileStream.CopyToAsync(destinationFileStream).ConfigureAwait(false);
-                    }
-                }
+
+                using var sourceFileStream = new FileStream(sourceFileInfo.FullName,
+                    FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
+                using var destinationFileStream = new FileStream(destinationFile.FullName,
+                    FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
+
+                await sourceFileStream.CopyToAsync(destinationFileStream).ConfigureAwait(false);
 
                 Write($"Updated {relativeFileInfo}");
 

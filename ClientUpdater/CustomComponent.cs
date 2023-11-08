@@ -157,15 +157,12 @@ public class CustomComponent
         {
             Logger.Log("CustomComponent: Initializing download of custom component: " + GUIName);
 
-            progressMessageHandler = new ProgressMessageHandler(new SocketsHttpHandler
+            progressMessageHandler = new ProgressMessageHandler(new StandardSocketsHttpHandler
             {
                 PooledConnectionLifetime = TimeSpan.FromMinutes(15),
-                AutomaticDecompression = DecompressionMethods.All
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             });
-            using var httpClient = new HttpClient(progressMessageHandler, true)
-            {
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
+            using var httpClient = new HttpClient(progressMessageHandler, disposeHandler: true);
 
             IsBeingDownloaded = true;
             currentDownloadPercentage = -1;
@@ -181,22 +178,10 @@ public class CustomComponent
 
             Logger.Log("CustomComponent: Downloading version info.");
 
-            var versionFileStream = new FileStream(versionFileName, new FileStreamOptions
+            using (var versionFileStream = new FileStream(versionFileName, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
             {
-                Access = FileAccess.Write,
-                Mode = FileMode.Create,
-                Options = FileOptions.Asynchronous,
-                Share = FileShare.None
-            });
-
-            await using (versionFileStream.ConfigureAwait(false))
-            {
-                Stream stream = await httpClient.GetStreamAsync(new Uri(uriString), cancellationToken).ConfigureAwait(false);
-
-                await using (stream.ConfigureAwait(false))
-                {
-                    await stream.CopyToAsync(versionFileStream, cancellationToken).ConfigureAwait(false);
-                }
+                using Stream stream = await httpClient.GetStreamAsync(new Uri(uriString), cancellationToken).ConfigureAwait(false);
+                await stream.CopyToAsync(versionFileStream, cancellationToken).ConfigureAwait(false);
             }
 
             var version = new IniFile(versionFileName);
@@ -218,22 +203,10 @@ public class CustomComponent
 
                 num++;
 
-                var downloadFileStream = new FileStream(downloadFileName, new FileStreamOptions
+                using (var downloadFileStream = new FileStream(versionFileName, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
                 {
-                    Access = FileAccess.Write,
-                    Mode = FileMode.Create,
-                    Options = FileOptions.Asynchronous,
-                    Share = FileShare.None
-                });
-
-                await using (downloadFileStream.ConfigureAwait(false))
-                {
-                    Stream stream = await httpClient.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false);
-
-                    await using (stream.ConfigureAwait(false))
-                    {
-                        await stream.CopyToAsync(downloadFileStream, cancellationToken).ConfigureAwait(false);
-                    }
+                    using Stream stream = await httpClient.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false);
+                    await stream.CopyToAsync(downloadFileStream, cancellationToken).ConfigureAwait(false);
                 }
 
                 Logger.Log("CustomComponent: Download of custom component " + GUIName + " finished - verifying.");

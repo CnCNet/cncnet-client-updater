@@ -136,7 +136,7 @@ public static class Updater
     private static readonly List<UpdaterFileInfo> ServerFileInfos = new();
     private static readonly List<UpdaterFileInfo> LocalFileInfos = new();
 
-    private static readonly ProgressMessageHandler SharedProgressMessageHandler = new(new SocketsHttpHandler
+    private static readonly ProgressMessageHandler SharedProgressMessageHandler = new(new StandardSocketsHttpHandler
     {
         PooledConnectionLifetime = TimeSpan.FromMinutes(15),
         AutomaticDecompression = DecompressionMethods.All
