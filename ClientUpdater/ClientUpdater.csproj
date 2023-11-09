@@ -21,7 +21,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageId>CnCNet.ClientUpdater</PackageId>
+    <PackageId>CnCNet.RS.ClientUpdater</PackageId>
     <PackageTags></PackageTags>
     <PackageProjectUrl>https://github.com/Rans4ckeR/cncnet-client-updater</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
