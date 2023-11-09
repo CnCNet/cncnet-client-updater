@@ -16,7 +16,7 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@main
       with:
-        dotnet-version: '7.x.x'
+        dotnet-version: '8.x.x'
 
     - name: Install GitVersion
       uses: gittools/actions/gitversion/setup@main
@@ -29,8 +29,11 @@ jobs:
     - name: Publish
       run: dotnet publish SecondStageUpdater/SecondStageUpdater.csproj --configuration Release -p:DebugType=embedded -p:AssemblyVersion=$env:GitVersion_AssemblySemVer -p:FileVersion=$env:GitVersion_AssemblySemFileVer -p:InformationalVersion=$env:GitVersion_InformationalVersion
 
-    - name: Zip
-      run: 7z a -r ${{ format('SecondStageUpdater-v{0}.zip', env.GitVersion_SemVer) }} ./SecondStageUpdater/bin/Release/net7.0/publish/*.*
+    - name: Zip 8.0
+      run: 7z a -r ${{ format('SecondStageUpdater-v{0}-net8.0.zip', env.GitVersion_SemVer) }} ./SecondStageUpdater/bin/Release/net8.0/publish/*.*
+
+    - name: Zip 7.0
+      run: 7z a -r ${{ format('SecondStageUpdater-v{0}-net7.0.zip', env.GitVersion_SemVer) }} ./SecondStageUpdater/bin/Release/net7.0/publish/*.*
 
     - name: Pack
       run: dotnet pack ClientUpdater\ClientUpdater.csproj --configuration Release -p:AssemblyVersion=$env:GitVersion_AssemblySemVer -p:FileVersion=$env:GitVersion_AssemblySemFileVer -p:InformationalVersion=$env:GitVersion_InformationalVersion -p:PackageVersion=$env:GitVersion_NuGetVersionV2
@@ -46,6 +49,3 @@ jobs:
       run: gh release create ${{ format('v{0}', env.GitVersion_SemVer) }} (@(get-item *.zip) + @(get-item ClientUpdater\bin\Release\*.*nupkg)) --generate-notes --target ${{ github.sha }}
       env:
         GH_TOKEN: ${{ github.token }}
-
-    - name: Push
-      run: dotnet nuget push ClientUpdater\bin\Release\*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source ${{ format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}

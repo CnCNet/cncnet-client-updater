@@ -33,19 +33,19 @@ internal sealed class Program
     private static bool hasHandle;
     private static Mutex clientMutex;
 
+    // e.g. args = new[] { "clientogl.dll", "\"C:\\Game\\\"" };
     private static void Main(string[] args)
     {
         defaultColor = Console.ForegroundColor;
 
         try
         {
-            Write("CnCNet Client Second-Stage Updater", ConsoleColor.Green);
+            Write("CnCNet Client Second-Stage Updater", true, ConsoleColor.Green);
             Write(string.Empty);
 
-            // e.g. clientogl.dll "C:\Game\"
             if (args.Length < 2 || string.IsNullOrEmpty(args[0]) || string.IsNullOrEmpty(args[1]) || !SafePath.GetDirectory(args[1].Replace("\"", null, StringComparison.OrdinalIgnoreCase)).Exists)
             {
-                Write("Invalid arguments given!", ConsoleColor.Red);
+                Write("Invalid arguments given!", true, ConsoleColor.Red);
                 Write("Usage: <client_executable_name> <base_directory>");
                 Write(string.Empty);
                 Exit(false);
@@ -55,7 +55,16 @@ internal sealed class Program
                 FileInfo clientExecutable = SafePath.GetFile(args[0]);
                 DirectoryInfo baseDirectory = SafePath.GetDirectory(args[1].Replace("\"", null, StringComparison.OrdinalIgnoreCase));
                 DirectoryInfo resourceDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Resources");
+                FileInfo logFile = SafePath.GetFile(SafePath.CombineFilePath(baseDirectory.FullName, "Client", "SecondStageUpdater.log"));
 
+                if (logFile.Exists)
+                    logFile.Delete();
+
+                Logger.Initialize(logFile.DirectoryName, logFile.Name);
+                Logger.WriteLogFile = true;
+                Logger.WriteToConsole = false;
+                Logger.Log("CnCNet Client Second-Stage Updater");
+                Logger.Log("Version: " + Assembly.GetAssembly(typeof(Program)).GetName().Version);
                 Write("Base directory: " + baseDirectory.FullName);
                 Write($"Waiting for the client ({clientExecutable.Name}) to exit..");
 
@@ -74,19 +83,22 @@ internal sealed class Program
 
                 if (!hasHandle)
                 {
-                    Write($"Timeout while waiting for the client ({clientExecutable.Name}) to exit!", ConsoleColor.Red);
+                    Write($"Timeout while waiting for the client ({clientExecutable.Name}) to exit!", true, ConsoleColor.Red);
                     Exit(false);
                 }
+
+                // This is occasionally necessary to prevent DLLs from being locked at the time that this update is attempting to overwrite them
+                Thread.Sleep(1000);
 
                 DirectoryInfo updaterDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Updater");
 
                 if (!updaterDirectory.Exists)
                 {
-                    Write($"{updaterDirectory.Name} directory does not exist!", ConsoleColor.Red);
+                    Write($"{updaterDirectory.Name} directory does not exist!", true, ConsoleColor.Red);
                     Exit(false);
                 }
 
-                Write("Updating files.", ConsoleColor.Green);
+                Write("Updating files.", true, ConsoleColor.Green);
 
                 IEnumerable<FileInfo> files = updaterDirectory.EnumerateFiles("*", SearchOption.AllDirectories);
                 FileInfo executableFile = SafePath.GetFile(Assembly.GetExecutingAssembly().Location);
@@ -125,7 +137,7 @@ internal sealed class Program
                         }
                         catch (Exception ex)
                         {
-                            Write($"Updating file failed! Returned error message: {ex}", ConsoleColor.Yellow);
+                            Write($"Updating file failed! Returned error message: {ex}", true, ConsoleColor.Yellow);
                             Write("If the problem persists, try to move the content of the \"Updater\" directory to the main directory manually or contact the staff for support.");
                             Exit(false);
                         }
@@ -143,7 +155,7 @@ internal sealed class Program
                     versionFile.CopyTo(destinationFile.FullName, true);
                 }
 
-                Write("Files successfully updated. Starting launcher..", ConsoleColor.Green);
+                Write("Files successfully updated. Starting launcher..", true, ConsoleColor.Green);
                 string launcherExe = string.Empty;
 
                 try
@@ -162,14 +174,14 @@ internal sealed class Program
                 }
                 catch (Exception ex)
                 {
-                    Write($"Failed to read ClientDefinitions.ini: {ex}", ConsoleColor.Yellow);
+                    Write($"Failed to read ClientDefinitions.ini: {ex}", true, ConsoleColor.Yellow);
                 }
 
                 FileInfo launcherExeFile = SafePath.GetFile(baseDirectory.FullName, launcherExe);
 
                 if (launcherExeFile.Exists)
                 {
-                    Write("Launcher executable found: " + launcherExe, ConsoleColor.Green);
+                    Write("Launcher executable found: " + launcherExe, true, ConsoleColor.Green);
 
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
                     using var _ = Process.Start(new ProcessStartInfo
@@ -180,7 +192,7 @@ internal sealed class Program
                 }
                 else
                 {
-                    Write("No suitable launcher executable found! Client will not automatically start after updater closes.", ConsoleColor.Yellow);
+                    Write("No suitable launcher executable found! Client will not automatically start after updater closes.", true, ConsoleColor.Yellow);
                     Exit(false);
                 }
             }
@@ -189,7 +201,7 @@ internal sealed class Program
         }
         catch (Exception ex)
         {
-            Write("An error occurred during the Launcher Updater's operation.", ConsoleColor.Red);
+            Write("An error occurred during the Launcher Updater's operation.", true, ConsoleColor.Red);
             Write($"Returned error was: {ex}");
             Write(string.Empty);
             Write("If you were updating a game, please try again. If the problem continues, contact the staff for support.");
@@ -213,16 +225,12 @@ internal sealed class Program
         }
     }
 
-    private static void Write(string text)
+    private static void Write(string text, bool logToFile = true, ConsoleColor? color = null)
     {
-        Console.ForegroundColor = defaultColor;
+        Console.ForegroundColor = color ?? defaultColor;
         Console.WriteLine(text);
-    }
 
-    private static void Write(string text, ConsoleColor color)
-    {
-        Console.ForegroundColor = color;
-        Console.WriteLine(text);
-        Console.ForegroundColor = defaultColor;
+        if (logToFile)
+            Logger.Log(text);
     }
 }

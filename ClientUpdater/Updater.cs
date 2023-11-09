@@ -553,7 +553,7 @@ public static class Updater
 
         foreach (string line in lines)
         {
-            if (string.IsNullOrWhiteSpace(line) || line.Trim().StartsWith(";", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(line) || line.Trim().StartsWith(';'))
                 continue;
 
             string[] array = line.Split(new char[] { ',' });
@@ -1176,7 +1176,7 @@ public static class Updater
                     {
                         currentFilename = info.Archived ? info.Filename + ARCHIVE_FILE_EXTENSION : info.Filename;
                         currentFileSize = info.Archived ? info.ArchiveSize : info.Size;
-                        bool flag = await DownloadFileAsync(info).ConfigureAwait(false);
+                        string errorMessage = await DownloadFileAsync(info).ConfigureAwait(false);
 
                         if (terminateUpdate)
                         {
@@ -1187,7 +1187,7 @@ public static class Updater
                             return;
                         }
 
-                        if (flag)
+                        if (errorMessage is null)
                         {
                             totalDownloadedKbs += info.Archived ? info.ArchiveSize : info.Size;
                             break;
@@ -1200,8 +1200,10 @@ public static class Updater
                             Logger.Log("Updater: Too many retries for downloading file " +
                                 (info.Archived ? info.Filename + ARCHIVE_FILE_EXTENSION : info.Filename) + ". Update halted.");
 
+                            string extraMsg = Environment.NewLine + Environment.NewLine + "Download error message: " + errorMessage;
+
                             throw new("Too many retries for downloading file " +
-                                      (info.Archived ? info.Filename + ARCHIVE_FILE_EXTENSION : info.Filename));
+                                      (info.Archived ? info.Filename + ARCHIVE_FILE_EXTENSION : info.Filename) + extraMsg);
                         }
                     }
                 }
@@ -1225,7 +1227,7 @@ public static class Updater
                     if (updaterDirectoryInfo.Exists)
                         versionFileTemp.MoveTo(SafePath.CombineFilePath(updaterDirectoryInfo.FullName, VERSION_FILE));
                     else
-                        versionFileTemp.MoveTo(SafePath.CombineFilePath(GamePath, VERSION_FILE));
+                        versionFileTemp.MoveTo(SafePath.CombineFilePath(GamePath, VERSION_FILE), true);
 
                     FileInfo themeFileInfo = SafePath.GetFile(GamePath, "Theme_c.ini");
 
@@ -1246,10 +1248,12 @@ public static class Updater
                             secondStageUpdaterDirectory.Create();
 
                         FileInfo secondStageUpdaterResource = SafePath.GetFile(secondStageUpdaterDirectory.FullName, SECOND_STAGE_UPDATER);
-                        DirectoryInfo updaterResourcesDirectory = SafePath.GetDirectory(updaterDirectoryInfo.FullName, "Resources");
+                        DirectoryInfo updaterResourcesDirectory = SafePath.GetDirectory(updaterDirectoryInfo.FullName, "Resources", "Updater");
 
                         if (updaterResourcesDirectory.Exists)
                         {
+                            Logger.Log("Updater: Checking & moving second-stage updater files.");
+
                             IEnumerable<FileInfo> updaterFiles = updaterResourcesDirectory.EnumerateFiles(Path.GetFileNameWithoutExtension(SECOND_STAGE_UPDATER) + ".*");
 
                             foreach (FileInfo updaterFile in updaterFiles)
@@ -1278,13 +1282,14 @@ public static class Updater
                             }
                         }
 
-                        Logger.Log("Updater: Launching second-stage updater executable " + SECOND_STAGE_UPDATER + ".");
+                        Logger.Log("Updater: Launching second-stage updater executable " + secondStageUpdaterResource.FullName + ".");
 
                         // e.g. dotnet "C:\Game\Resources\SecondStageUpdater.dll" clientogl.dll "C:\Game\"
                         using var _ = Process.Start(new ProcessStartInfo
                         {
                             FileName = "dotnet",
-                            Arguments = "\"" + secondStageUpdaterResource.FullName + "\" " + CallingExecutableFileName + " \"" + GamePath + "\""
+                            Arguments = "\"" + secondStageUpdaterResource.FullName + "\" " + CallingExecutableFileName + " \"" + GamePath + "\"",
+                            UseShellExecute = true
                         });
 
                         Restart?.Invoke(null, EventArgs.Empty);
@@ -1321,15 +1326,15 @@ public static class Updater
     /// Downloads and handles individual file.
     /// </summary>
     /// <param name="fileInfo">File info for the file.</param>
-    /// <returns>True if successful, otherwise false.</returns>
-    private static async ValueTask<bool> DownloadFileAsync(UpdaterFileInfo fileInfo)
+    /// <returns>Error message if something went wrong, otherwise null.</returns>
+    private static async ValueTask<string> DownloadFileAsync(UpdaterFileInfo fileInfo)
     {
         Logger.Log("Updater: Initializing download of file " + fileInfo.Filename);
 
         UpdateDownloadProgress(0);
 
         string filename = fileInfo.Filename;
-        string prefixPath = "Updater";
+        const string prefixPath = "Updater";
         FileInfo decompressedFile = SafePath.GetFile(GamePath, prefixPath, filename);
 
         try
@@ -1385,20 +1390,21 @@ public static class Updater
                     }
                     else
                     {
-                        Logger.Log("Updater: Downloaded archive " + filename + extraExtension + " has a non-matching identifier: " + archiveIdentifier + " against " + fileInfo.ArchiveIdentifier);
+                        string errorMsg = "Downloaded archive " + filename + extraExtension + " has a non-matching identifier: " + archiveIdentifier + " against " + fileInfo.ArchiveIdentifier;
+                        Logger.Log("Updater: " + errorMsg);
                         DeleteFileAndWait(downloadFile.FullName);
 
-                        return false;
+                        return errorMsg;
                     }
                 }
 
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && downloadFile.Extension.Equals(".sh", StringComparison.OrdinalIgnoreCase))
                 {
-                    Logger.Log($"Updater: File {downloadFile.Name} is a script, adding execute permission.");
+                    Logger.Log($"Updater: File {downloadFile.Name} is a script, adding execute permission. Current permission flags: " + downloadFile.UnixFileMode);
 
                     downloadFile.UnixFileMode |= UnixFileMode.UserExecute;
 
-                    Logger.Log($"Updater: File {downloadFile.Name} execute permission added.");
+                    Logger.Log($"Updater: File {downloadFile.Name} execute permission added. Current permission flags: " + downloadFile.UnixFileMode);
                 }
             }
 
@@ -1407,20 +1413,21 @@ public static class Updater
             {
                 Logger.Log("Updater: File " + filename + " is intact.");
 
-                return true;
+                return null;
             }
 
-            Logger.Log("Updater: Downloaded file " + filename + " has a non-matching identifier: " + fileIdentifier + " against " + fileInfo.Identifier);
+            string msg = "Downloaded file " + filename + " has a non-matching identifier: " + fileIdentifier + " against " + fileInfo.Identifier;
+            Logger.Log("Updater: " + msg);
             DeleteFileAndWait(decompressedFile.FullName);
 
-            return false;
+            return msg;
         }
         catch (Exception exception)
         {
             Logger.Log("Updater: An error occurred while downloading file " + filename + ": " + exception.Message);
             DeleteFileAndWait(decompressedFile.FullName);
 
-            return false;
+            return exception.Message;
         }
     }
 

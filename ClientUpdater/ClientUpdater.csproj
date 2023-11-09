@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFrameworks>net8.0;net7.0</TargetFrameworks>
     <Title>CnCNet.ClientUpdater</Title>
     <Description>CnCNet Client Updater Library</Description>
     <Company>CnCNet</Company>
-    <Product></Product>
+    <Product>CnCNet.RS.ClientUpdater</Product>
     <Copyright>Copyright © CnCNet 2023</Copyright>
     <Trademark></Trademark>
     <AssemblyName>ClientUpdater</AssemblyName>
@@ -23,7 +23,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageId>CnCNet.ClientUpdater</PackageId>
     <PackageTags></PackageTags>
-    <PackageProjectUrl>https://github.com/CnCNet/cncnet-client-updater</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/Rans4ckeR/cncnet-client-updater</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageLicenseExpression></PackageLicenseExpression>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
@@ -39,9 +39,9 @@
     <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />
-    <PackageReference Include="Rampastring.Tools" Version="2.0.4" />
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
+    <PackageReference Include="Rampastring.RS.Tools" Version="2.0.1-rs0002" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="StyleCop.Analyzers" Version="1.2.0-beta.507">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
