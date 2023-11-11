@@ -177,7 +177,14 @@ internal sealed class Program
                     Write($"Failed to read ClientDefinitions.ini: {ex}", true, ConsoleColor.Yellow);
                 }
 
+                FileInfo architectureLauncherExeFile = SafePath.GetFile(baseDirectory.FullName, "Launcher", FormattableString.Invariant($"{Path.GetFileNameWithoutExtension(launcherExe)}-{RuntimeInformation.OSArchitecture}{Path.GetExtension(launcherExe)}"));
                 FileInfo launcherExeFile = SafePath.GetFile(baseDirectory.FullName, launcherExe);
+
+                if (architectureLauncherExeFile.Exists)
+                {
+                    architectureLauncherExeFile.CopyTo(launcherExeFile.FullName, true);
+                    launcherExeFile.Refresh();
+                }
 
                 if (launcherExeFile.Exists)
                 {
