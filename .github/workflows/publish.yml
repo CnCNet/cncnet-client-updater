@@ -82,7 +82,7 @@ jobs:
     - name: Publish
       run: dotnet publish SecondStageUpdater/SecondStageUpdater.csproj ${{ matrix.framework == 'net7.0' && '-c Release' || '' }} -p:DebugType=embedded -f ${{ matrix.framework }} -p:AssemblyVersion=${{env.AssemblySemVer}} -p:FileVersion=${{env.AssemblySemFileVer}} -p:InformationalVersion=${{env.InformationalVersion}}
     - name: Zip
-      run: 7z a -r ${{ format('SecondStageUpdater-v{0}-{1}.zip', env.GitVersion_SemVer, matrix.framework) }} ./SecondStageUpdater/bin/Release/${{ matrix.framework }}/publish/*.*
+      run: 7z a -r ${{ format('SecondStageUpdater-v{0}-{1}.zip', env.SemVer, matrix.framework) }} ./SecondStageUpdater/bin/Release/${{ matrix.framework }}/publish/*.*
     - name: Upload Artifacts
       uses: actions/upload-artifact@main
       with:
