@@ -33,7 +33,7 @@ internal sealed class Program
     private static bool hasHandle;
     private static Mutex clientMutex;
 
-    // e.g. args = new[] { "clientogl.dll", "\"C:\\Game\\\"" };
+    // e.g. args = ["clientogl.dll", "\"C:\\Game\\\""];
     private static void Main(string[] args)
     {
         defaultColor = Console.ForegroundColor;
@@ -52,7 +52,7 @@ internal sealed class Program
             }
             else
             {
-                FileInfo clientExecutable = SafePath.GetFile(args[0]);
+                string clientExecutable = args[0];
                 DirectoryInfo baseDirectory = SafePath.GetDirectory(args[1].Replace("\"", null, StringComparison.OrdinalIgnoreCase));
                 DirectoryInfo resourceDirectory = SafePath.GetDirectory(baseDirectory.FullName, "Resources");
                 FileInfo logFile = SafePath.GetFile(SafePath.CombineFilePath(baseDirectory.FullName, "Client", "SecondStageUpdater.log"));
@@ -66,7 +66,7 @@ internal sealed class Program
                 Logger.Log("CnCNet Client Second-Stage Updater");
                 Logger.Log("Version: " + Assembly.GetAssembly(typeof(Program)).GetName().Version);
                 Write("Base directory: " + baseDirectory.FullName);
-                Write($"Waiting for the client ({clientExecutable.Name}) to exit..");
+                Write($"Waiting for the client ({clientExecutable}) to exit..");
 
                 string clientMutexId = FormattableString.Invariant($"Global{Guid.Parse("1CC9F8E7-9F69-4BBC-B045-E734204027A9")}");
 
@@ -83,7 +83,7 @@ internal sealed class Program
 
                 if (!hasHandle)
                 {
-                    Write($"Timeout while waiting for the client ({clientExecutable.Name}) to exit!", true, ConsoleColor.Red);
+                    Write($"Timeout while waiting for the client ({clientExecutable}) to exit!", true, ConsoleColor.Red);
                     Exit(false);
                 }
 
@@ -107,10 +107,11 @@ internal sealed class Program
 
                 Write($"{nameof(SecondStageUpdater)}: {relativeExecutableFile}");
 
+                AssemblyName[] assemblies = Assembly.LoadFrom(executableFile.FullName).GetReferencedAssemblies();
+
                 foreach (FileInfo fileInfo in files)
                 {
                     FileInfo relativeFileInfo = SafePath.GetFile(fileInfo.FullName[updaterDirectory.FullName.Length..]);
-                    AssemblyName[] assemblies = Assembly.LoadFrom(executableFile.FullName).GetReferencedAssemblies();
 
                     if (relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(relativeExecutableFile.ToString()[..^relativeExecutableFile.Extension.Length], StringComparison.OrdinalIgnoreCase)
                         || relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(SafePath.CombineFilePath("Resources", Path.GetFileNameWithoutExtension(relativeExecutableFile.Name)), StringComparison.OrdinalIgnoreCase))
@@ -177,7 +178,7 @@ internal sealed class Program
                     Write($"Failed to read ClientDefinitions.ini: {ex}", true, ConsoleColor.Yellow);
                 }
 
-                FileInfo architectureLauncherExeFile = SafePath.GetFile(baseDirectory.FullName, "Launcher", FormattableString.Invariant($"{Path.GetFileNameWithoutExtension(launcherExe)}-{RuntimeInformation.OSArchitecture}{Path.GetExtension(launcherExe)}"));
+                FileInfo architectureLauncherExeFile = SafePath.GetFile(resourceDirectory.FullName, "Launcher", FormattableString.Invariant($"{Path.GetFileNameWithoutExtension(launcherExe)}-{RuntimeInformation.OSArchitecture}{Path.GetExtension(launcherExe)}"));
                 FileInfo launcherExeFile = SafePath.GetFile(baseDirectory.FullName, launcherExe);
 
                 if (architectureLauncherExeFile.Exists)

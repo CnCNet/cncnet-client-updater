@@ -33,6 +33,9 @@
     <AnalysisModeDocumentation Condition="'$(Configuration)' != 'Debug'">None</AnalysisModeDocumentation>
     <AnalysisModeNaming Condition="'$(Configuration)' != 'Debug'">None</AnalysisModeNaming>
     <AnalysisModeStyle Condition="'$(Configuration)' != 'Debug'">None</AnalysisModeStyle>
+    <LangVersion>preview</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" />

@@ -1404,6 +1404,8 @@ public static class Updater
 
                     downloadFile.UnixFileMode |= UnixFileMode.UserExecute;
 
+                    downloadFile.Refresh();
+
                     Logger.Log($"Updater: File {downloadFile.Name} execute permission added. Current permission flags: " + downloadFile.UnixFileMode);
                 }
             }

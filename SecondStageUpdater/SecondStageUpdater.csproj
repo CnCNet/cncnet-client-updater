@@ -18,6 +18,9 @@
     <ComVisible>false</ComVisible>
     <CLSCompliant>false</CLSCompliant>
     <UseAppHost>false</UseAppHost>
+    <LangVersion>preview</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Rampastring.RS.Tools" Version="2.0.4" />
