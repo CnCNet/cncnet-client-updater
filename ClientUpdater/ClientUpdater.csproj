@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net7.0;net481;net48</TargetFrameworks>
     <Title>CnCNet.ClientUpdater</Title>
     <Description>CnCNet Client Updater Library</Description>
     <Company>CnCNet</Company>
@@ -46,6 +46,9 @@
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="StyleCop.Analyzers" Version="1.2.0-beta.507">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Meziantou.Polyfill" Version="1.0.30" Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
 </Project>

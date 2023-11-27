@@ -157,15 +157,25 @@ public class CustomComponent
         {
             Logger.Log("CustomComponent: Initializing download of custom component: " + GUIName);
 
-            progressMessageHandler = new ProgressMessageHandler(new SocketsHttpHandler
+#if NETFRAMEWORK
+            progressMessageHandler = new(new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            });
+
+            using var httpClient = new HttpClient(progressMessageHandler, true);
+#else
+            progressMessageHandler = new(new SocketsHttpHandler
             {
                 PooledConnectionLifetime = TimeSpan.FromMinutes(15),
                 AutomaticDecompression = DecompressionMethods.All
             });
+
             using var httpClient = new HttpClient(progressMessageHandler, true)
             {
                 DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
             };
+#endif
 
             IsBeingDownloaded = true;
             currentDownloadPercentage = -1;
@@ -181,6 +191,9 @@ public class CustomComponent
 
             Logger.Log("CustomComponent: Downloading version info.");
 
+#if NETFRAMEWORK
+            var versionFileStream = new FileStream(versionFileName, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+#else
             var versionFileStream = new FileStream(versionFileName, new FileStreamOptions
             {
                 Access = FileAccess.Write,
@@ -188,14 +201,31 @@ public class CustomComponent
                 Options = FileOptions.Asynchronous,
                 Share = FileShare.None
             });
+#endif
 
+#if NETFRAMEWORK
+            using (versionFileStream)
+#else
             await using (versionFileStream.ConfigureAwait(false))
+#endif
             {
+#if NETFRAMEWORK
+                Stream stream = await httpClient.GetStreamAsync(new Uri(uriString)).ConfigureAwait(false);
+#else
                 Stream stream = await httpClient.GetStreamAsync(new Uri(uriString), cancellationToken).ConfigureAwait(false);
+#endif
 
+#if NETFRAMEWORK
+                using (stream)
+#else
                 await using (stream.ConfigureAwait(false))
+#endif
                 {
+#if NETFRAMEWORK
+                    await stream.CopyToAsync(versionFileStream, 81920, cancellationToken).ConfigureAwait(false);
+#else
                     await stream.CopyToAsync(versionFileStream, cancellationToken).ConfigureAwait(false);
+#endif
                 }
             }
 
@@ -218,21 +248,41 @@ public class CustomComponent
 
                 num++;
 
-                var downloadFileStream = new FileStream(downloadFileName, new FileStreamOptions
+#if NETFRAMEWORK
+                var downloadFileStream = new FileStream(versionFileName, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+#else
+                var downloadFileStream = new FileStream(versionFileName, new FileStreamOptions
                 {
                     Access = FileAccess.Write,
                     Mode = FileMode.Create,
                     Options = FileOptions.Asynchronous,
                     Share = FileShare.None
                 });
+#endif
 
+#if NETFRAMEWORK
+                using (downloadFileStream)
+#else
                 await using (downloadFileStream.ConfigureAwait(false))
+#endif
                 {
+#if NETFRAMEWORK
+                    Stream stream = await httpClient.GetStreamAsync(downloadUri).ConfigureAwait(false);
+#else
                     Stream stream = await httpClient.GetStreamAsync(downloadUri, cancellationToken).ConfigureAwait(false);
+#endif
 
+#if NETFRAMEWORK
+                    using (stream)
+#else
                     await using (stream.ConfigureAwait(false))
+#endif
                     {
+#if NETFRAMEWORK
+                        await stream.CopyToAsync(downloadFileStream, 81920, cancellationToken).ConfigureAwait(false);
+#else
                         await stream.CopyToAsync(downloadFileStream, cancellationToken).ConfigureAwait(false);
+#endif
                     }
                 }
 

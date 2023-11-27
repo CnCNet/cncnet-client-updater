@@ -34,6 +34,9 @@ public static class CompressionHelper
     public static async ValueTask CompressFileAsync(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
     {
         var encoder = new Encoder(cancellationToken);
+#if NETFRAMEWORK
+        var inputStream = new FileStream(inputFilename, FileMode.Open, FileAccess.Read, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+#else
         var inputStream = new FileStream(inputFilename, new FileStreamOptions
         {
             Access = FileAccess.Read,
@@ -41,9 +44,17 @@ public static class CompressionHelper
             Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
             Share = FileShare.None
         });
+#endif
 
+#if NETFRAMEWORK
+        using (inputStream)
+#else
         await using (inputStream.ConfigureAwait(false))
+#endif
         {
+#if NETFRAMEWORK
+            var outputStream = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+#else
             var outputStream = new FileStream(outputFilename, new FileStreamOptions
             {
                 Access = FileAccess.Write,
@@ -51,8 +62,13 @@ public static class CompressionHelper
                 Options = FileOptions.Asynchronous,
                 Share = FileShare.None
             });
+#endif
 
+#if NETFRAMEWORK
+            using (outputStream)
+#else
             await using (outputStream.ConfigureAwait(false))
+#endif
             {
                 encoder.WriteCoderProperties(outputStream);
                 await outputStream.WriteAsync(BitConverter.GetBytes(inputStream.Length).AsMemory(0, 8), cancellationToken).ConfigureAwait(false);
@@ -69,6 +85,9 @@ public static class CompressionHelper
     public static async ValueTask DecompressFileAsync(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
     {
         var decoder = new Decoder(cancellationToken);
+#if NETFRAMEWORK
+        var inputStream = new FileStream(inputFilename, FileMode.Open, FileAccess.Read, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+#else
         var inputStream = new FileStream(inputFilename, new FileStreamOptions
         {
             Access = FileAccess.Read,
@@ -76,9 +95,17 @@ public static class CompressionHelper
             Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
             Share = FileShare.None
         });
+#endif
 
+#if NETFRAMEWORK
+        using (inputStream)
+#else
         await using (inputStream.ConfigureAwait(false))
+#endif
         {
+#if NETFRAMEWORK
+            var outputStream = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+#else
             var outputStream = new FileStream(outputFilename, new FileStreamOptions
             {
                 Access = FileAccess.Write,
@@ -86,8 +113,13 @@ public static class CompressionHelper
                 Options = FileOptions.Asynchronous,
                 Share = FileShare.None
             });
+#endif
 
+#if NETFRAMEWORK
+            using (outputStream)
+#else
             await using (outputStream.ConfigureAwait(false))
+#endif
             {
                 byte[] properties = new byte[5];
                 byte[] fileLengthArray = new byte[sizeof(long)];

@@ -113,17 +113,17 @@ internal sealed class Program
                 {
                     FileInfo relativeFileInfo = SafePath.GetFile(fileInfo.FullName[updaterDirectory.FullName.Length..]);
 
-                    if (relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(relativeExecutableFile.ToString()[..^relativeExecutableFile.Extension.Length], StringComparison.OrdinalIgnoreCase)
-                        || relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(SafePath.CombineFilePath("Resources", Path.GetFileNameWithoutExtension(relativeExecutableFile.Name)), StringComparison.OrdinalIgnoreCase))
+                    if (relativeFileInfo.FullName[..^relativeFileInfo.Extension.Length].Equals(relativeExecutableFile.FullName[..^relativeExecutableFile.Extension.Length], StringComparison.OrdinalIgnoreCase)
+                        || relativeFileInfo.FullName[..^relativeFileInfo.Extension.Length].Equals(SafePath.CombineFilePath("Resources", Path.GetFileNameWithoutExtension(relativeExecutableFile.Name)), StringComparison.OrdinalIgnoreCase))
                     {
                         Write($"Skipping {nameof(SecondStageUpdater)} file {relativeFileInfo}");
                     }
-                    else if (assemblies.Any(q => relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(q.Name, StringComparison.OrdinalIgnoreCase))
-                        || assemblies.Any(q => relativeFileInfo.ToString()[..^relativeFileInfo.Extension.Length].Equals(SafePath.CombineFilePath("Resources", q.Name), StringComparison.OrdinalIgnoreCase)))
+                    else if (assemblies.Any(q => relativeFileInfo.FullName[..^relativeFileInfo.Extension.Length].Equals(q.Name, StringComparison.OrdinalIgnoreCase))
+                        || assemblies.Any(q => relativeFileInfo.FullName[..^relativeFileInfo.Extension.Length].Equals(SafePath.CombineFilePath("Resources", q.Name), StringComparison.OrdinalIgnoreCase)))
                     {
                         Write($"Skipping {nameof(SecondStageUpdater)} dependency {relativeFileInfo}");
                     }
-                    else if (relativeFileInfo.ToString().Equals(versionFileName, StringComparison.OrdinalIgnoreCase))
+                    else if (relativeFileInfo.FullName.Equals(versionFileName, StringComparison.OrdinalIgnoreCase))
                     {
                         Write($"Skipping {relativeFileInfo}");
                     }
@@ -131,7 +131,7 @@ internal sealed class Program
                     {
                         try
                         {
-                            FileInfo copiedFile = SafePath.GetFile(baseDirectory.FullName, relativeFileInfo.ToString());
+                            FileInfo copiedFile = SafePath.GetFile(baseDirectory.FullName, relativeFileInfo.FullName);
 
                             Write($"Updating {relativeFileInfo}");
                             fileInfo.CopyTo(copiedFile.FullName, true);
