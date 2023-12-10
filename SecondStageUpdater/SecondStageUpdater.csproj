@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <LangVersion>11.0</LangVersion>
+    <LangVersion>12.0</LangVersion>
     <OutputType>Exe</OutputType>
     <Title></Title>
     <Description>CnCNet Client Second-Stage Updater</Description>
@@ -22,9 +22,6 @@
     <Version>1.0.1.1</Version>
     <AssemblyVersion>$(PackageVersion)</AssemblyVersion>
     <FileVersion>$(PackageVersion)</FileVersion>
-
-    <!-- workaround: temporarily bypass Polyfill's missing Index Range issue -->
-    <DefineConstants>$(DefineConstants);NET48X</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Rampastring.Tools" Version="2.0.4" />
@@ -32,7 +29,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Polyfill" Version="1.32.0">
+    <PackageReference Include="Polyfill" Version="1.33.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
