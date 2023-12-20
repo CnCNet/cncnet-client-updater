@@ -53,6 +53,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@main
       with:
+        name: ClientUpdater
         path: ClientUpdater\bin\*\*.*nupkg
         if-no-files-found: error
   publish-secondstageupdater:
@@ -86,6 +87,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@main
       with:
+        name: SecondStageUpdater-${{ matrix.framework }}
         path: ./*.zip
         if-no-files-found: error
   release:
@@ -103,7 +105,12 @@ jobs:
         ref: ${{ env.Sha }}
     - name: Download Artifacts
       uses: actions/download-artifact@main
+      with:
+        path: artifacts
+        merge-multiple: true
+    - name: Push
+      run: dotnet nuget push artifacts\*\*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
     - name: Release
-      run: gh release create v${{ env.SemVer }} @((Get-Item artifact\*.zip) + (Get-Item artifact\*\*.*nupkg)) --generate-notes --target ${{ env.Sha }} ${{ env.PreReleaseTag != '' && '--prerelease' || '' }}
+      run: gh release create v${{ env.SemVer }} @((Get-Item artifacts\*.zip) + (Get-Item artifacts\*\*.*nupkg)) --generate-notes --target ${{ env.Sha }} ${{ env.PreReleaseTag != '' && '--prerelease' || '' }}
       env:
         GH_TOKEN: ${{ github.token }}
