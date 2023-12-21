@@ -5,7 +5,7 @@
     <Title>CnCNet.SecondStageUpdater</Title>
     <Description>CnCNet Client Second-Stage Updater</Description>
     <Company>CnCNet</Company>
-    <Product>CnCNet.RS.SecondStageUpdater</Product>
+    <Product>CnCNet.SecondStageUpdater</Product>
     <Copyright>Copyright © CnCNet 2023</Copyright>
     <Trademark></Trademark>
     <AssemblyName>SecondStageUpdater</AssemblyName>
@@ -24,7 +24,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Rampastring.RS.Tools" Version="2.0.5" />
+    <PackageReference Include="Rampastring.Tools" Version="2.0.4" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

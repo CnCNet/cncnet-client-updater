@@ -1,6 +1,6 @@
 branches:
   rs:
-    regex: ^rs$
+    regex: ^master$
     
     mode: ContinuousDelivery
     increment: Patch
