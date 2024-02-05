@@ -1,5 +1,5 @@
 branches:
-  rs:
+  master:
     regex: ^master$
     
     mode: ContinuousDelivery
