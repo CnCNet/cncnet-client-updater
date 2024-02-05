@@ -34,13 +34,47 @@ public static class CompressionHelper
     public static async ValueTask CompressFileAsync(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
     {
         var encoder = new Encoder(cancellationToken);
+#if NETFRAMEWORK
+        var inputStream = new FileStream(inputFilename, FileMode.Open, FileAccess.Read, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+#else
+        var inputStream = new FileStream(inputFilename, new FileStreamOptions
+        {
+            Access = FileAccess.Read,
+            Mode = FileMode.Open,
+            Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
+            Share = FileShare.None
+        });
+#endif
 
-        using var inputStream = new FileStream(inputFilename, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
-        using var outputStream = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
+#if NETFRAMEWORK
+        using (inputStream)
+#else
+        await using (inputStream.ConfigureAwait(false))
+#endif
+        {
+#if NETFRAMEWORK
+            var outputStream = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+#else
+            var outputStream = new FileStream(outputFilename, new FileStreamOptions
+            {
+                Access = FileAccess.Write,
+                Mode = FileMode.Create,
+                Options = FileOptions.Asynchronous,
+                Share = FileShare.None
+            });
+#endif
 
-        encoder.WriteCoderProperties(outputStream);
-        await outputStream.WriteAsync(BitConverter.GetBytes(inputStream.Length).AsMemory(0, 8), cancellationToken).ConfigureAwait(false);
-        encoder.Code(inputStream, outputStream, inputStream.Length, outputStream.Length, null);
+#if NETFRAMEWORK
+            using (outputStream)
+#else
+            await using (outputStream.ConfigureAwait(false))
+#endif
+            {
+                encoder.WriteCoderProperties(outputStream);
+                await outputStream.WriteAsync(BitConverter.GetBytes(inputStream.Length).AsMemory(0, 8), cancellationToken).ConfigureAwait(false);
+                encoder.Code(inputStream, outputStream, inputStream.Length, outputStream.Length, null);
+            }
+        }
     }
 
     /// <summary>
@@ -51,14 +85,44 @@ public static class CompressionHelper
     public static async ValueTask DecompressFileAsync(string inputFilename, string outputFilename, CancellationToken cancellationToken = default)
     {
         var decoder = new Decoder(cancellationToken);
-        using var inputStream = new FileStream(inputFilename, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
-        using var outputStream = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
+#if NETFRAMEWORK
+        var inputStream = new FileStream(inputFilename, FileMode.Open, FileAccess.Read, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+#else
+        var inputStream = new FileStream(inputFilename, new FileStreamOptions
+        {
+            Access = FileAccess.Read,
+            Mode = FileMode.Open,
+            Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
+            Share = FileShare.None
+        });
+#endif
 
-        byte[] properties = new byte[5];
-        byte[] fileLengthArray = new byte[sizeof(long)];
+#if NETFRAMEWORK
+        using (inputStream)
+#else
+        await using (inputStream.ConfigureAwait(false))
+#endif
+        {
+#if NETFRAMEWORK
+            var outputStream = new FileStream(outputFilename, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+#else
+            var outputStream = new FileStream(outputFilename, new FileStreamOptions
+            {
+                Access = FileAccess.Write,
+                Mode = FileMode.Create,
+                Options = FileOptions.Asynchronous,
+                Share = FileShare.None
+            });
+#endif
 
-        await inputStream.ReadAsync(properties, cancellationToken).ConfigureAwait(false);
-        await inputStream.ReadAsync(fileLengthArray, cancellationToken).ConfigureAwait(false);
+#if NETFRAMEWORK
+            using (outputStream)
+#else
+            await using (outputStream.ConfigureAwait(false))
+#endif
+            {
+                byte[] properties = new byte[5];
+                byte[] fileLengthArray = new byte[sizeof(long)];
 
         long fileLength = BitConverter.ToInt64(fileLengthArray, 0);
 
