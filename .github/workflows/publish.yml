@@ -6,7 +6,7 @@ permissions:
 jobs:
   calculate-version:
     name: Calculate Version
-    runs-on: windows-latest
+    runs-on: windows-2022
     outputs:
       AssemblySemVer: ${{ steps.gitversion.outputs.AssemblySemVer }}
       AssemblySemFileVer: ${{ steps.gitversion.outputs.AssemblySemFileVer }}
@@ -29,7 +29,7 @@ jobs:
       uses: gittools/actions/gitversion/execute@main
   pack-updater:
     name: Pack ClientUpdater
-    runs-on: windows-latest
+    runs-on: windows-2022
     needs: calculate-version
     env:
       AssemblySemVer: ${{ needs.calculate-version.outputs.AssemblySemVer }}
@@ -58,7 +58,7 @@ jobs:
         if-no-files-found: error
   publish-secondstageupdater:
     name: Publish SecondStageUpdater
-    runs-on: windows-latest
+    runs-on: windows-2022
     needs: calculate-version
     env:
       AssemblySemVer: ${{ needs.calculate-version.outputs.AssemblySemVer }}
@@ -97,7 +97,7 @@ jobs:
       PreReleaseTag: ${{ needs.calculate-version.outputs.PreReleaseTag }}
       SemVer: ${{ needs.calculate-version.outputs.SemVer }}
       Sha: ${{ needs.calculate-version.outputs.Sha }}
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
     - name: Checkout
       uses: actions/checkout@main
