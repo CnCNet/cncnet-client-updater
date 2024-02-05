@@ -123,10 +123,11 @@ public static class CompressionHelper
             {
                 byte[] properties = new byte[5];
                 byte[] fileLengthArray = new byte[sizeof(long)];
+                long fileLength = BitConverter.ToInt64(fileLengthArray, 0);
 
-        long fileLength = BitConverter.ToInt64(fileLengthArray, 0);
-
-        decoder.SetDecoderProperties(properties);
-        decoder.Code(inputStream, outputStream, inputStream.Length, fileLength, null);
+                decoder.SetDecoderProperties(properties);
+                decoder.Code(inputStream, outputStream, inputStream.Length, fileLength, null);
+            }
+        }
     }
 }
