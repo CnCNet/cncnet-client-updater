@@ -33,7 +33,7 @@
     <AnalysisModeDocumentation Condition="'$(Configuration)' != 'Debug'">None</AnalysisModeDocumentation>
     <AnalysisModeNaming Condition="'$(Configuration)' != 'Debug'">None</AnalysisModeNaming>
     <AnalysisModeStyle Condition="'$(Configuration)' != 'Debug'">None</AnalysisModeStyle>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>12.0</LangVersion>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
