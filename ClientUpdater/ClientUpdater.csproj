@@ -7,7 +7,7 @@
     <Product>CnCNet.ClientUpdater</Product>
     <Copyright>Copyright © CnCNet 2023</Copyright>
     <Trademark></Trademark>
-    <AssemblyName>ClientUpdater</AssemblyName>
+    <AssemblyName>DTAUpdater</AssemblyName>
     <RootNamespace>ClientUpdater</RootNamespace>
     <ComVisible>false</ComVisible>
     <CLSCompliant>false</CLSCompliant>
