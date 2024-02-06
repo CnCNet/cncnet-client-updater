@@ -1275,22 +1275,14 @@ public static class Updater
                     FileInfo versionFileTemp = SafePath.GetFile(GamePath, FormattableString.Invariant($"{VERSION_FILE}_u"));
 
                     if (updaterDirectoryInfo.Exists)
-#if NETFRAMEWORK
                     {
-#endif
                         versionFileTemp.MoveTo(SafePath.CombineFilePath(updaterDirectoryInfo.FullName, VERSION_FILE));
-#if NETFRAMEWORK
                     }
-#endif
                     else
-#if NETFRAMEWORK
                     {
                         SafePath.DeleteFileIfExists(versionFile.FullName);
                         versionFileTemp.MoveTo(versionFile.FullName);
                     }
-#else
-                        versionFileTemp.MoveTo(versionFile.FullName, true);
-#endif
 
                     FileInfo themeFileInfo = SafePath.GetFile(GamePath, "Theme_c.ini");
 
@@ -1325,12 +1317,8 @@ public static class Updater
 
                                 Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
 
-#if NETFRAMEWORK
                                 SafePath.DeleteFileIfExists(updaterFileResource.FullName);
                                 updaterFile.MoveTo(updaterFileResource.FullName);
-#else
-                                updaterFile.MoveTo(updaterFileResource.FullName, true);
-#endif
                             }
 
                             AssemblyName[] assemblies = Assembly.LoadFrom(secondStageUpdaterResource.FullName).GetReferencedAssemblies();
@@ -1346,12 +1334,8 @@ public static class Updater
 
                                 Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
 
-#if NETFRAMEWORK
                                 SafePath.DeleteFileIfExists(updaterFileResource.FullName);
                                 updaterFile.MoveTo(updaterFileResource.FullName);
-#else
-                                updaterFile.MoveTo(updaterFileResource.FullName, true);
-#endif
                             }
                         }
 
