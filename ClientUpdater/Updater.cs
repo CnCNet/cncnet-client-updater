@@ -38,7 +38,7 @@ using Rampastring.Tools;
 public static class Updater
 {
 #if NETFRAMEWORK
-    private const string SECOND_STAGE_UPDATER = "clientupdt.dat";
+    private const string SECOND_STAGE_UPDATER = "SecondStageUpdater.exe";
 #else
     private const string SECOND_STAGE_UPDATER = "SecondStageUpdater.dll";
 #endif
@@ -1302,14 +1302,10 @@ public static class Updater
 
                     if (updaterDirectoryInfo.Exists)
                     {
-                        // the second stage updater is placed at the game directory, i.e., the folder where "Resources" folder and "clientupdt.dat" file both reside in.
-                        DirectoryInfo secondStageUpdaterDirectory = SafePath.GetDirectory(GamePath);
-#if !NETFRAMEWORK
-                        // In .NET 8 build, the second stage updater is placed at "Resources\Updater" directory.
-                        secondStageUpdaterDirectory = SafePath.GetDirectory(ResourcePath, "Updater");
+                        // the second stage updater is placed at "Resources\Updater" directory.
+                        DirectoryInfo secondStageUpdaterDirectory = SafePath.GetDirectory(ResourcePath, "Updater");
                         if (!secondStageUpdaterDirectory.Exists)
                             secondStageUpdaterDirectory.Create();
-#endif
 
                         FileInfo secondStageUpdaterResource = SafePath.GetFile(secondStageUpdaterDirectory.FullName, SECOND_STAGE_UPDATER);
 

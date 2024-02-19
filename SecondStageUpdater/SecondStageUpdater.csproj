@@ -34,9 +34,4 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
-  <Target Name="RenameExe" AfterTargets="Publish" Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
-    <Message Importance="high" Text="Renaming SecondStageUpdater as clientupdt.dat"/>
-    <Move SourceFiles="$(PublishDir)SecondStageUpdater.exe" DestinationFiles="$(PublishDir)clientupdt.dat"/>
-  </Target>
 </Project>
