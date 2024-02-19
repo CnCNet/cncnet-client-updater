@@ -1274,6 +1274,7 @@ public static class Updater
                     await ExecuteAfterUpdateScriptAsync().ConfigureAwait(false);
                     Logger.Log("Updater: Cleaning up.");
 
+                    // this folder contains incoming files+
                     DirectoryInfo updaterDirectoryInfo = SafePath.GetDirectory(GamePath, "Updater");
                     FileInfo versionFile = SafePath.GetFile(GamePath, VERSION_FILE);
                     FileInfo versionFileTemp = SafePath.GetFile(GamePath, FormattableString.Invariant($"{VERSION_FILE}_u"));
@@ -1301,16 +1302,18 @@ public static class Updater
 
                     if (updaterDirectoryInfo.Exists)
                     {
-                        DirectoryInfo secondStageUpdaterDirectory = SafePath.GetDirectory(ResourcePath, "Updater");
-
+                        // the second stage updater is placed at the game directory, i.e., the folder where "Resources" folder and "clientupdt.dat" file both reside in.
+                        DirectoryInfo secondStageUpdaterDirectory = SafePath.GetDirectory(GamePath);
+#if !NETFRAMEWORK
+                        // In .NET 8 build, the second stage updater is placed at "Resources\Updater" directory.
+                        secondStageUpdaterDirectory = SafePath.GetDirectory(ResourcePath, "Updater");
                         if (!secondStageUpdaterDirectory.Exists)
                             secondStageUpdaterDirectory.Create();
+#endif
 
                         FileInfo secondStageUpdaterResource = SafePath.GetFile(secondStageUpdaterDirectory.FullName, SECOND_STAGE_UPDATER);
 
-                        // the second stage updater is placed at the game directory, i.e., the folder where "Resources" folder and "clientupdt.dat" file both reside in.
 #if !NETFRAMEWORK
-                        // In .NET 8 build, the second stage updater is allowed to be placed at "Resources\Updater" directory.
 
                         DirectoryInfo updaterResourcesDirectory = SafePath.GetDirectory(updaterDirectoryInfo.FullName, "Resources", "Updater");
 
