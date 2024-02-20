@@ -25,9 +25,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Handlers;
 using System.Reflection;
-#if !NETFRAMEWORK
 using System.Runtime.InteropServices;
-#endif
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -42,6 +40,7 @@ public static class Updater
 #else
     private const string SECOND_STAGE_UPDATER = "SecondStageUpdater.dll";
 #endif
+    private const string LEGACY_SECOND_STAGE_UPDATER = "clientupdt.dat";
 
     public const string VERSION_FILE = "version";
     public const string ARCHIVE_FILE_EXTENSION = ".lzma";
@@ -1274,14 +1273,14 @@ public static class Updater
                     await ExecuteAfterUpdateScriptAsync().ConfigureAwait(false);
                     Logger.Log("Updater: Cleaning up.");
 
-                    // this folder contains incoming files+
-                    DirectoryInfo updaterDirectoryInfo = SafePath.GetDirectory(GamePath, "Updater");
+                    // this folder contains incoming files
+                    DirectoryInfo incomingDirectoryInfo = SafePath.GetDirectory(GamePath, "Updater");
                     FileInfo versionFile = SafePath.GetFile(GamePath, VERSION_FILE);
                     FileInfo versionFileTemp = SafePath.GetFile(GamePath, FormattableString.Invariant($"{VERSION_FILE}_u"));
 
-                    if (updaterDirectoryInfo.Exists)
+                    if (incomingDirectoryInfo.Exists)
                     {
-                        versionFileTemp.MoveTo(SafePath.CombineFilePath(updaterDirectoryInfo.FullName, VERSION_FILE));
+                        versionFileTemp.MoveTo(SafePath.CombineFilePath(incomingDirectoryInfo.FullName, VERSION_FILE));
                     }
                     else
                     {
@@ -1298,30 +1297,43 @@ public static class Updater
                         Logger.Log("Updater: Theme.ini copied successfully.");
                     }
 
-                    updaterDirectoryInfo.Refresh();
+                    incomingDirectoryInfo.Refresh();
 
-                    if (updaterDirectoryInfo.Exists)
+                    if (incomingDirectoryInfo.Exists)
                     {
+                        // update legacy second stage updater
+                        DirectoryInfo currentLegacySecondStageUpdaterDirectory = SafePath.GetDirectory(GamePath);
+                        FileInfo currentLegacySecondStageUpdaterExecutable = SafePath.GetFile(currentLegacySecondStageUpdaterDirectory.FullName, LEGACY_SECOND_STAGE_UPDATER);
+                        DirectoryInfo incomingLegacySecondStageUpdaterDirectory = SafePath.GetDirectory(incomingDirectoryInfo.FullName);
+                        FileInfo incomingLegacySecondStageUpdaterExecutable = SafePath.GetFile(incomingLegacySecondStageUpdaterDirectory.FullName, LEGACY_SECOND_STAGE_UPDATER);
+                        if (incomingLegacySecondStageUpdaterExecutable.Exists)
+                        {
+                            SafePath.DeleteFileIfExists(currentLegacySecondStageUpdaterExecutable.FullName);
+                            incomingLegacySecondStageUpdaterExecutable.MoveTo(currentLegacySecondStageUpdaterExecutable.FullName);
+                            currentLegacySecondStageUpdaterExecutable.Refresh();
+                        }
+
+                        #region update-second-stage-updater
+
                         // the second stage updater is placed at "Resources\Updater" directory.
-                        DirectoryInfo secondStageUpdaterDirectory = SafePath.GetDirectory(ResourcePath, "Updater");
-                        if (!secondStageUpdaterDirectory.Exists)
-                            secondStageUpdaterDirectory.Create();
+                        DirectoryInfo currentSecondStageUpdaterDirectory = SafePath.GetDirectory(ResourcePath, "Updater");
+                        if (!currentSecondStageUpdaterDirectory.Exists)
+                            currentSecondStageUpdaterDirectory.Create();
 
-                        FileInfo secondStageUpdaterResource = SafePath.GetFile(secondStageUpdaterDirectory.FullName, SECOND_STAGE_UPDATER);
+                        FileInfo secondStageUpdaterExecutable = SafePath.GetFile(currentSecondStageUpdaterDirectory.FullName, SECOND_STAGE_UPDATER);
 
-#if !NETFRAMEWORK
-
-                        DirectoryInfo updaterResourcesDirectory = SafePath.GetDirectory(updaterDirectoryInfo.FullName, "Resources", "Updater");
-
-                        if (updaterResourcesDirectory.Exists)
+                        // update the new second stage updater before other files
+                        DirectoryInfo incomingSecondStageUpdaterDirectory = SafePath.GetDirectory(incomingDirectoryInfo.FullName, "Resources", "Updater");
+                        if (incomingSecondStageUpdaterDirectory.Exists)
                         {
                             Logger.Log("Updater: Checking & moving second-stage updater files.");
 
-                            IEnumerable<FileInfo> updaterFiles = updaterResourcesDirectory.EnumerateFiles(Path.GetFileNameWithoutExtension(SECOND_STAGE_UPDATER) + ".*");
+                            // copy SecondStageUpdater
+                            IEnumerable<FileInfo> updaterFiles = incomingSecondStageUpdaterDirectory.EnumerateFiles(Path.GetFileNameWithoutExtension(SECOND_STAGE_UPDATER) + ".*");
 
                             foreach (FileInfo updaterFile in updaterFiles)
                             {
-                                FileInfo updaterFileResource = SafePath.GetFile(secondStageUpdaterDirectory.FullName, updaterFile.Name);
+                                FileInfo updaterFileResource = SafePath.GetFile(currentSecondStageUpdaterDirectory.FullName, updaterFile.Name);
 
                                 Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
 
@@ -1329,44 +1341,68 @@ public static class Updater
                                 updaterFile.MoveTo(updaterFileResource.FullName);
                             }
 
-                            AssemblyName[] assemblies = Assembly.LoadFrom(secondStageUpdaterResource.FullName).GetReferencedAssemblies();
+                            // copy SecondStageUpdater dependencies
+                            AssemblyName[] assemblies = Assembly.LoadFrom(secondStageUpdaterExecutable.FullName).GetReferencedAssemblies();
 
                             foreach (AssemblyName assembly in assemblies)
                             {
-                                FileInfo updaterFile = SafePath.GetFile(updaterResourcesDirectory.FullName, FormattableString.Invariant($"{assembly.Name}.dll"));
+                                FileInfo incomingAssemblyFile = SafePath.GetFile(incomingSecondStageUpdaterDirectory.FullName, FormattableString.Invariant($"{assembly.Name}.dll"));
 
-                                if (!updaterFile.Exists)
+                                if (!incomingAssemblyFile.Exists)
+                                {
+                                    Logger.Log("Updater: Missing assembly file required by second-stage updater: " + incomingAssemblyFile.Name + ".");
                                     continue;
+                                }
 
-                                FileInfo updaterFileResource = SafePath.GetFile(secondStageUpdaterDirectory.FullName, updaterFile.Name);
+                                FileInfo currentAssemblyFile = SafePath.GetFile(currentSecondStageUpdaterDirectory.FullName, incomingAssemblyFile.Name);
 
-                                Logger.Log("Updater: Moving second-stage updater file " + updaterFile.Name + ".");
+                                Logger.Log("Updater: Moving second-stage updater file " + incomingAssemblyFile.Name + ".");
 
-                                SafePath.DeleteFileIfExists(updaterFileResource.FullName);
-                                updaterFile.MoveTo(updaterFileResource.FullName);
+                                SafePath.DeleteFileIfExists(currentAssemblyFile.FullName);
+                                incomingAssemblyFile.MoveTo(currentAssemblyFile.FullName);
                             }
                         }
+                        #endregion
+
+                        Logger.Log("Updater: Launching second-stage updater executable " + secondStageUpdaterExecutable.FullName + ".");
+
+                        // fallback to the old "clientupdt.dat" file if the new second-stage updater does not exist
+                        bool runNativeWindowsExe = true;
+#if !NETFRAMEWORK
+                        runNativeWindowsExe = false;
 #endif
 
-                        Logger.Log("Updater: Launching second-stage updater executable " + secondStageUpdaterResource.FullName + ".");
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !secondStageUpdaterExecutable.Exists)
+                        {
+                            Logger.Log("Updater: Missing second-stage updater executable " + secondStageUpdaterExecutable.FullName + ".");
+                            if (currentLegacySecondStageUpdaterExecutable.Exists)
+                            {
+                                Logger.Log("Updater: Falling back to legacy second-stage updater executable " + currentLegacySecondStageUpdaterExecutable.FullName + ".");
+                                secondStageUpdaterExecutable = currentLegacySecondStageUpdaterExecutable;
+                                runNativeWindowsExe = true;
+                            }
+                        }
 
-#if NETFRAMEWORK
-                        // e.g. C:\Game\Resources\SecondStageUpdater.exe clientogl.dll "C:\Game\"
-                        using var _ = Process.Start(new ProcessStartInfo
+                        if (runNativeWindowsExe)
                         {
-                            FileName = secondStageUpdaterResource.FullName,
-                            Arguments = CallingExecutableFileName + " \"" + GamePath + "\"",
-                            UseShellExecute = false
-                        });
-#else
-                        // e.g. dotnet "C:\Game\Resources\SecondStageUpdater.dll" clientogl.dll "C:\Game\"
-                        using var _ = Process.Start(new ProcessStartInfo
+                            // e.g. C:\Game\Resources\SecondStageUpdater.exe clientogl.exe "C:\Game\"
+                            using var _ = Process.Start(new ProcessStartInfo
+                            {
+                                FileName = secondStageUpdaterExecutable.FullName,
+                                Arguments = CallingExecutableFileName + " \"" + GamePath + "\"",
+                                UseShellExecute = false,
+                            });
+                        }
+                        else
                         {
-                            FileName = $"\"{secondStageUpdaterResource.FullName}\"",
-                            Arguments = $"{CallingExecutableFileName} \"{GamePath}\"",
-                            UseShellExecute = true
-                        });
-#endif
+                            // e.g. dotnet "C:\Game\Resources\SecondStageUpdater.dll" clientogl.dll "C:\Game\"
+                            using var _ = Process.Start(new ProcessStartInfo
+                            {
+                                FileName = $"\"{secondStageUpdaterExecutable.FullName}\"",
+                                Arguments = $"{CallingExecutableFileName} \"{GamePath}\"",
+                                UseShellExecute = true,
+                            });
+                        }
 
                         Restart?.Invoke(null, EventArgs.Empty);
                     }
