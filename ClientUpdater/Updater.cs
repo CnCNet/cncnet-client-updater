@@ -1402,8 +1402,8 @@ public static class Updater
                             // e.g. dotnet "C:\Game\Resources\SecondStageUpdater.dll" clientogl.dll "C:\Game\"
                             using var _ = Process.Start(new ProcessStartInfo
                             {
-                                FileName = $"\"{secondStageUpdaterExecutable.FullName}\"",
-                                Arguments = $"{CallingExecutableFileName} \"{GamePath}\"",
+                                FileName = "dotnet",
+                                Arguments = "\"" + secondStageUpdaterExecutable.FullName + "\" " + CallingExecutableFileName + " \"" + GamePath + "\"",
                                 UseShellExecute = true,
                             });
                         }
