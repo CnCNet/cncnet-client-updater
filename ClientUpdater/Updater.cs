@@ -582,6 +582,12 @@ public static class Updater
         }
     }
 
+    private static FileStream NewFileStream(string filename)
+    {
+        var fileStream = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+        return fileStream;
+    }
+
     /// <summary>
     /// Performs a version file check on update server.
     /// </summary>
@@ -615,31 +621,13 @@ public static class Updater
                     {
                         Logger.Log("Updater: Trying to connect to update mirror " + updateMirrors[currentUpdateMirrorIndex].URL);
 
-#if NETFRAMEWORK
-                        var fileStream = new FileStream(downloadFile.FullName, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-#else
-                        var fileStream = new FileStream(downloadFile.FullName, new FileStreamOptions
-                        {
-                            Access = FileAccess.Write,
-                            Mode = FileMode.Create,
-                            Options = FileOptions.Asynchronous,
-                            Share = FileShare.None
-                        });
-#endif
+                        FileStream fileStream = NewFileStream(downloadFile.FullName);
 
-#if NETFRAMEWORK
                         using (fileStream)
-#else
-                        await using (fileStream.ConfigureAwait(false))
-#endif
                         {
                             Stream stream = await SharedHttpClient.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + VERSION_FILE).ConfigureAwait(false);
 
-#if NETFRAMEWORK
                             using (stream)
-#else
-                            await using (stream.ConfigureAwait(false))
-#endif
                             {
                                 await stream.CopyToAsync(fileStream).ConfigureAwait(false);
                             }
@@ -791,31 +779,14 @@ public static class Updater
         try
         {
             string downloadFile = SafePath.CombineFilePath(GamePath, "updateexec");
-#if NETFRAMEWORK
-            var fileStream = new FileStream(downloadFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-#else
-            var fileStream = new FileStream(downloadFile, new FileStreamOptions
-            {
-                Access = FileAccess.Write,
-                Mode = FileMode.Create,
-                Options = FileOptions.Asynchronous,
-                Share = FileShare.None
-            });
-#endif
+            
+            FileStream fileStream = NewFileStream(downloadFile);
 
-#if NETFRAMEWORK
             using (fileStream)
-#else
-            await using (fileStream.ConfigureAwait(false))
-#endif
             {
                 Stream stream = await SharedHttpClient.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + "updateexec").ConfigureAwait(false);
 
-#if NETFRAMEWORK
                 using (stream)
-#else
-                await using (stream.ConfigureAwait(false))
-#endif
                 {
                     await stream.CopyToAsync(fileStream).ConfigureAwait(false);
                 }
@@ -840,31 +811,14 @@ public static class Updater
         try
         {
             string downloadFile = SafePath.CombineFilePath(GamePath, "preupdateexec");
-#if NETFRAMEWORK
-            var fileStream = new FileStream(downloadFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-#else
-            var fileStream = new FileStream(downloadFile, new FileStreamOptions
-            {
-                Access = FileAccess.Write,
-                Mode = FileMode.Create,
-                Options = FileOptions.Asynchronous,
-                Share = FileShare.None
-            });
-#endif
+            
+            FileStream fileStream = NewFileStream(downloadFile);
 
-#if NETFRAMEWORK
             using (fileStream)
-#else
-            await using (fileStream.ConfigureAwait(false))
-#endif
             {
                 Stream stream = await SharedHttpClient.GetStreamAsync(updateMirrors[currentUpdateMirrorIndex].URL + "preupdateexec").ConfigureAwait(false);
 
-#if NETFRAMEWORK
                 using (stream)
-#else
-                await using (stream.ConfigureAwait(false))
-#endif
                 {
                     await stream.CopyToAsync(fileStream).ConfigureAwait(false);
                 }
@@ -1474,31 +1428,12 @@ public static class Updater
             else
             {
                 Logger.Log("Updater: Downloading file " + filename + extraExtension);
-#if NETFRAMEWORK
-                var fileStream = new FileStream(downloadFile.FullName, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-#else
-                var fileStream = new FileStream(downloadFile.FullName, new FileStreamOptions
-                {
-                    Access = FileAccess.Write,
-                    Mode = FileMode.Create,
-                    Options = FileOptions.Asynchronous,
-                    Share = FileShare.None
-                });
-#endif
 
-#if NETFRAMEWORK
+                FileStream fileStream = NewFileStream(downloadFile.FullName);
                 using (fileStream)
-#else
-                await using (fileStream.ConfigureAwait(false))
-#endif
                 {
                     Stream stream = await SharedHttpClient.GetStreamAsync(new Uri(uriString)).ConfigureAwait(false);
-
-#if NETFRAMEWORK
                     using (stream)
-#else
-                    await using (stream.ConfigureAwait(false))
-#endif
                     {
                         await stream.CopyToAsync(fileStream).ConfigureAwait(false);
                     }
