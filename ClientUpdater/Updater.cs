@@ -1273,7 +1273,7 @@ public static class Updater
                     await ExecuteAfterUpdateScriptAsync().ConfigureAwait(false);
                     Logger.Log("Updater: Cleaning up.");
 
-                    // this folder contains incoming files
+                    // this folder contains incoming files that needs to be updated by second stage updater
                     DirectoryInfo incomingDirectoryInfo = SafePath.GetDirectory(GamePath, "Updater");
                     FileInfo versionFile = SafePath.GetFile(GamePath, VERSION_FILE);
                     FileInfo versionFileTemp = SafePath.GetFile(GamePath, FormattableString.Invariant($"{VERSION_FILE}_u"));
@@ -1281,9 +1281,13 @@ public static class Updater
                     if (incomingDirectoryInfo.Exists)
                     {
                         versionFileTemp.MoveTo(SafePath.CombineFilePath(incomingDirectoryInfo.FullName, VERSION_FILE));
+
+                        // make sure the existing version file do not exist, to make the legacy "clientupdt.exe" second stage updater happy
+                        SafePath.DeleteFileIfExists(versionFile.FullName);
                     }
                     else
                     {
+                        // since second stage updater will not be launched, just override the existing version file
                         SafePath.DeleteFileIfExists(versionFile.FullName);
                         versionFileTemp.MoveTo(versionFile.FullName);
                     }
