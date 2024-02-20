@@ -1341,26 +1341,33 @@ public static class Updater
                             }
                         }
 
+                        ProcessStartInfo secondStageUpdaterStartInfo;
                         if (runNativeWindowsExe)
                         {
                             // e.g. C:\Game\Resources\SecondStageUpdater.exe clientogl.exe "C:\Game\"
-                            using var _ = Process.Start(new ProcessStartInfo
+                            secondStageUpdaterStartInfo = new ProcessStartInfo
                             {
                                 FileName = secondStageUpdaterExecutable.FullName,
                                 Arguments = CallingExecutableFileName + " \"" + GamePath + "\"",
                                 UseShellExecute = false,
-                            });
+                            };
                         }
                         else
                         {
                             // e.g. dotnet "C:\Game\Resources\SecondStageUpdater.dll" clientogl.dll "C:\Game\"
-                            using var _ = Process.Start(new ProcessStartInfo
+                            secondStageUpdaterStartInfo = new ProcessStartInfo
                             {
                                 FileName = "dotnet",
                                 Arguments = "\"" + secondStageUpdaterExecutable.FullName + "\" " + CallingExecutableFileName + " \"" + GamePath + "\"",
                                 UseShellExecute = true,
-                            });
+                            };
                         }
+
+                        Logger.Log("Updater: Launching second-stage updater executable.");
+                        Logger.Log("Updater: FileName = " + secondStageUpdaterStartInfo.FileName);
+                        Logger.Log("Updater: Arguments = " + secondStageUpdaterStartInfo.Arguments);
+                        Logger.Log("Updater: UseShellExecute = " + secondStageUpdaterStartInfo.UseShellExecute);
+                        using var _ = Process.Start(secondStageUpdaterStartInfo);
 
                         Restart?.Invoke(null, EventArgs.Empty);
                     }
