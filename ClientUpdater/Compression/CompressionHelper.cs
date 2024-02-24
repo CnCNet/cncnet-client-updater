@@ -70,6 +70,9 @@ public static class CompressionHelper
                 byte[] fileLengthArray = new byte[sizeof(long)];
                 long fileLength = BitConverter.ToInt64(fileLengthArray, 0);
 
+                await inputStream.ReadAsync(properties, cancellationToken).ConfigureAwait(false);
+                await inputStream.ReadAsync(fileLengthArray, cancellationToken).ConfigureAwait(false);
+
                 decoder.SetDecoderProperties(properties);
                 decoder.Code(inputStream, outputStream, inputStream.Length, fileLength, null);
             }
