@@ -1428,9 +1428,7 @@ public static class Updater
             if (downloadFile.Exists &&
                 (fileInfo.Archived ? fileInfo.Identifier : fileInfo.ArchiveIdentifier) == GetUniqueIdForFile(fileRelativePath))
             {
-                string msg = "File " + filename + " has already been downloaded, skipping downloading.";
-                Logger.Log("Updater: " + msg);
-                return msg;
+                Logger.Log("Updater: File " + filename + " has already been downloaded, skipping downloading.");
             }
             else
             {
@@ -1487,21 +1485,21 @@ public static class Updater
                     Logger.Log($"Updater: File {downloadFile.Name} execute permission added. Current permission flags: " + downloadFile.UnixFileMode);
                 }
 #endif
-
-                string fileIdentifier = CheckFileIdentifiers(filename, SafePath.CombineFilePath(prefixPath, filename), fileInfo.Identifier);
-                if (string.IsNullOrEmpty(fileIdentifier))
-                {
-                    Logger.Log("Updater: File " + filename + " is intact.");
-
-                    return null;
-                }
-
-                string msg = "Downloaded file " + filename + " has a non-matching identifier: " + fileIdentifier + " against " + fileInfo.Identifier;
-                Logger.Log("Updater: " + msg);
-                DeleteFileAndWait(decompressedFile.FullName);
-
-                return msg;
             }
+
+            string fileIdentifier = CheckFileIdentifiers(filename, SafePath.CombineFilePath(prefixPath, filename), fileInfo.Identifier);
+            if (string.IsNullOrEmpty(fileIdentifier))
+            {
+                Logger.Log("Updater: File " + filename + " is intact.");
+
+                return null;
+            }
+
+            string msg = "Downloaded file " + filename + " has a non-matching identifier: " + fileIdentifier + " against " + fileInfo.Identifier;
+            Logger.Log("Updater: " + msg);
+            DeleteFileAndWait(decompressedFile.FullName);
+
+            return msg;
         }
         catch (Exception exception)
         {
